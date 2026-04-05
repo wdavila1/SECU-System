@@ -1,0 +1,262 @@
+<%- include('../../partials/admin-header', { active: 'empleados' }) %>
+
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Nuevo Empleado</h1>
+    <p class="page-subtitle mb-0">Complete el formulario para registrar un nuevo empleado</p>
+  </div>
+  <a href="/admin/empleados" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<form action="/admin/empleados/nuevo" method="POST">
+  <div class="row g-4">
+    <!-- Datos Personales -->
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-person me-2"></i>Datos Personales
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Primer Nombre *</label>
+              <input type="text" class="form-control" name="p_nombre" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Segundo Nombre</label>
+              <input type="text" class="form-control" name="s_nombre">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Primer Apellido *</label>
+              <input type="text" class="form-control" name="p_apellido" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Segundo Apellido</label>
+              <input type="text" class="form-control" name="s_apellido">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">DNI *</label>
+              <input type="text" class="form-control" name="dni" maxlength="15" 
+              placeholder="Ej: 08011200012345 (sin guiones)" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Genero</label>
+              <select class="form-select" name="genero">
+                <option value="">Seleccionar...</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Femenino">Femenino</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha de Nacimiento *</label>
+              <input type="date" class="form-control" name="fecha_nacimiento" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Telefono *</label>
+              <input type="text" class="form-control" name="telefono" 
+              placeholder="Ej: 99887766 (sin guiones)" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Correo Electronico *</label>
+              <input type="email" class="form-control" name="correo" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Departamento *</label>
+              <select class="form-select" id="id_departamento" required>
+                <option value="">Seleccionar departamento...</option>
+                <% departamentos.forEach(d => { %>
+                  <option value="<%= d.id_departamento %>"><%= d.departamento %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Ciudad *</label>
+              <select class="form-select" name="id_ciudad" id="id_ciudad" required disabled>
+                <option value="">Seleccione un departamento primero...</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Direccion *</label>
+              <textarea class="form-control" name="direccion" rows="2" required></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Datos de Empleado -->
+    <div class="col-lg-6">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-briefcase me-2"></i>Datos de Empleado
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Puestos de Trabajo *</label>
+              <select class="form-select" name="puestos" id="selectPuestos" multiple required>
+                <% puestos.forEach(puesto => { %>
+                  <option value="<%= puesto.id_puesto %>"><%= puesto.puesto %></option>
+                <% }); %>
+              </select>
+              <small class="text-muted">Seleccione uno o mas puestos de trabajo</small>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Fecha de Contratacion *</label>
+              <input type="date" class="form-control" name="fecha_contratacion" value="<%= new Date().toISOString().split('T')[0] %>" required>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-shield-lock me-2"></i>Credenciales de Acceso
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Usuario *</label>
+              <div class="input-group">
+                <input type="text" class="form-control" name="usuario" id="usuario" maxlength="15" required>
+                <button type="button" class="btn btn-outline-secondary" id="btnSugerirUsuario">
+                  <i class="bi bi-magic me-1"></i>Sugerir
+                </button>
+              </div>
+              <small class="text-muted">Maximo 15 caracteres, sin espacios</small>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Contraseña Temporal</label>
+              <div class="input-group">
+                <input type="text" class="form-control" name="contrasenia" id="contrasenia" minlength="6">
+                <button type="button" class="btn btn-outline-secondary" id="btnGenerarPass">
+                  <i class="bi bi-key me-1"></i>Generar
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="btnCopiarPass">
+                  <i class="bi bi-clipboard"></i>
+                </button>
+              </div>
+              <small class="text-muted">Si se deja vacio, se generara automaticamente</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-person-gear me-2"></i>Roles del Sistema
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">Seleccione los roles que tendra el empleado</p>
+          <% roles.forEach(rol => { 
+            let iconClass = 'bi-person';
+            let colorClass = 'secondary';
+            if (rol.rol === 'Administrador') { iconClass = 'bi-shield-fill'; colorClass = 'danger'; }
+            if (rol.rol === 'Digitador') { iconClass = 'bi-keyboard'; colorClass = 'primary'; }
+            if (rol.rol === 'Encuestador') { iconClass = 'bi-clipboard-check'; colorClass = 'success'; }
+          %>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" name="roles" value="<%= rol.id_rol %>" id="rol<%= rol.id_rol %>">
+              <label class="form-check-label" for="rol<%= rol.id_rol %>">
+                <i class="bi <%= iconClass %> text-<%= colorClass %> me-1"></i>
+                <%= rol.rol %>
+              </label>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary btn-lg">
+      <i class="bi bi-check-lg me-2"></i>Guardar Empleado
+    </button>
+    <a href="/admin/empleados" class="btn btn-outline-secondary btn-lg ms-2">Cancelar</a>
+  </div>
+</form>
+
+<script>
+// Inicializar Tom Select para puestos
+new TomSelect('#selectPuestos', {
+  plugins: ['remove_button'],
+  placeholder: 'Seleccionar puestos...',
+  maxItems: null
+});
+
+// Cascada departamento -> ciudades
+document.getElementById('id_departamento').addEventListener('change', async function() {
+  const idDepartamento = this.value;
+  const ciudadSelect = document.getElementById('id_ciudad');
+  
+  if (!idDepartamento) {
+    ciudadSelect.innerHTML = '<option value="">Seleccione un departamento primero...</option>';
+    ciudadSelect.disabled = true;
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/admin/api/ciudades?id_departamento=${idDepartamento}`);
+    const ciudades = await response.json();
+    
+    ciudadSelect.innerHTML = '<option value="">Seleccionar ciudad...</option>';
+    ciudades.forEach(c => {
+      ciudadSelect.innerHTML += `<option value="${c.id_ciudad}">${c.ciudad}</option>`;
+    });
+    ciudadSelect.disabled = false;
+  } catch (error) {
+    console.error('Error cargando ciudades:', error);
+  }
+});
+
+// Sugerir usuario
+document.getElementById('btnSugerirUsuario').addEventListener('click', async function() {
+  const pNombre = document.querySelector('[name="p_nombre"]').value;
+  const sNombre = document.querySelector('[name="s_nombre"]').value;
+  const pApellido = document.querySelector('[name="p_apellido"]').value;
+  
+  if (!pNombre || !pApellido) {
+    alert('Ingrese al menos el primer nombre y primer apellido');
+    return;
+  }
+  
+  try {
+    const params = new URLSearchParams({ p_nombre: pNombre, s_nombre: sNombre, p_apellido: pApellido });
+    const response = await fetch(`/admin/api/generar-usuario?${params}`);
+    const data = await response.json();
+    
+    if (data.usuario) {
+      document.getElementById('usuario').value = data.usuario;
+    }
+  } catch (error) {
+    console.error('Error generando usuario:', error);
+  }
+});
+
+// Generar contrasena
+document.getElementById('btnGenerarPass').addEventListener('click', function() {
+  const password = 'Secu' + Math.floor(1000 + Math.random() * 9000) + '!';
+  document.getElementById('contrasenia').value = password;
+});
+
+// Copiar contrasena
+document.getElementById('btnCopiarPass').addEventListener('click', function() {
+  const passInput = document.getElementById('contrasenia');
+  if (passInput.value) {
+    navigator.clipboard.writeText(passInput.value).then(() => {
+      this.innerHTML = '<i class="bi bi-check text-success"></i>';
+      setTimeout(() => {
+        this.innerHTML = '<i class="bi bi-clipboard"></i>';
+      }, 2000);
+    });
+  }
+});
+</script>
+
+<%- include('../../partials/admin-footer') %>

@@ -1,0 +1,64 @@
+<%- include('../../partials/digitador-header', { active: 'reportes' }, { title: 'Reportes Operativos - SECU' }) %>
+
+<% const active = 'reportes'; %>
+
+<div class="page-title">Reportes Operativos</div>
+<p class="page-subtitle">Genera reportes con graficas y analisis de tu actividad</p>
+
+<div class="row g-4">
+    <!-- Reporte de Servicios -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon rounded p-3 me-3" style="background: #0e749020;">
+                        <i class="bi bi-briefcase fs-4" style="color: #0e7490;"></i>
+                    </div>
+                    <h5 class="card-title mb-0">Servicios Registrados</h5>
+                </div>
+                <p class="text-muted small mb-3">Listado de servicios que has registrado con graficas por tipo y estado.</p>
+                <a href="/digitador/reportes/servicios" class="btn btn-outline-primary">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i>Generar Reporte
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte de Cotizaciones -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon rounded p-3 me-3" style="background: #0891b220;">
+                        <i class="bi bi-file-earmark-text fs-4" style="color: #0891b2;"></i>
+                    </div>
+                    <h5 class="card-title mb-0">Cotizaciones</h5>
+                </div>
+                <p class="text-muted small mb-3">Resumen de cotizaciones por estado y empresa con totales.</p>
+                <a href="/digitador/reportes/cotizaciones" class="btn btn-outline-info">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i>Generar Reporte
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte de Facturas -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon rounded p-3 me-3" style="background: #10b98120;">
+                        <i class="bi bi-receipt fs-4" style="color: #10b981;"></i>
+                    </div>
+                    <h5 class="card-title mb-0">Facturas</h5>
+                </div>
+                <p class="text-muted small mb-3">Control de facturacion por periodo y estado de pago.</p>
+                <a href="/digitador/reportes/facturas" class="btn btn-outline-success">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i>Generar Reporte
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/digitador-footer') %>

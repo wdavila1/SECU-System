@@ -1,0 +1,273 @@
+<%- include('../../partials/admin-header', { active: 'reportes' }) %>
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Reporte de Servicios</h1>
+    <p class="page-subtitle mb-0">Genera reportes detallados de servicios</p>
+  </div>
+  <a href="/admin/reportes" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-funnel me-2"></i>Filtros del Reporte
+  </div>
+  <div class="card-body">
+    <form action="/admin/reportes/servicios" method="GET" class="row g-3">
+      <div class="col-md-2">
+        <label class="form-label">Fecha Inicio</label>
+        <input type="date" class="form-control" name="fecha_inicio" value="<%= filtros.fecha_inicio || '' %>">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Fecha Fin</label>
+        <input type="date" class="form-control" name="fecha_fin" value="<%= filtros.fecha_fin || '' %>">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" name="tipo">
+          <option value="">Todos</option>
+          <% tiposServicio.forEach(t => { %>
+            <option value="<%= t.id_tipo_servicio %>" <%= filtros.tipo == t.id_tipo_servicio ? 'selected' : '' %>><%= t.tipo_servicio %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Estado</label>
+        <select class="form-select" name="estado">
+          <option value="">Todos</option>
+          <option value="Pendiente" <%= filtros.estado === 'Pendiente' ? 'selected' : '' %>>Pendiente</option>
+          <option value="En proceso" <%= filtros.estado === 'En proceso' ? 'selected' : '' %>>En proceso</option>
+          <option value="Finalizado" <%= filtros.estado === 'Finalizado' ? 'selected' : '' %>>Finalizado</option>
+          <option value="Cancelado" <%= filtros.estado === 'Cancelado' ? 'selected' : '' %>>Cancelado</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Empresa</label>
+        <select class="form-select" name="empresa" id="filtroEmpresaServicios">
+          <option value="">Todas</option>
+          <% empresas.forEach(e => { %>
+            <option value="<%= e.id_empresa %>" <%= filtros.empresa == e.id_empresa ? 'selected' : '' %>><%= e.empresa %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-search me-2"></i>Generar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Graficas Chart.js -->
+<% if (servicios.length > 0) { %>
+<div class="row g-4 mb-4">
+  <!-- Grafica de Barras: Servicios por Tipo -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-bar-chart me-2"></i>Servicios por Tipo
+      </div>
+      <div class="card-body">
+        <canvas id="graficaTipo" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Grafica Donut: Servicios por Estado -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-pie-chart me-2"></i>Servicios por Estado
+      </div>
+      <div class="card-body">
+        <canvas id="graficaEstado" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<!-- Resumen -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= servicios.length %></div>
+          <div class="label">Total de Servicios</div>
+        </div>
+        <div class="icon" style="background: #1e3a5f;">
+          <i class="bi bi-briefcase"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= servicios.filter(s => s.estado_servicio === 'Finalizado').length %></div>
+          <div class="label">Finalizados</div>
+        </div>
+        <div class="icon" style="background: #10b981;">
+          <i class="bi bi-check-circle"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= servicios.filter(s => s.estado_servicio === 'Pendiente' || s.estado_servicio === 'En proceso').length %></div>
+          <div class="label">En Proceso/Pendientes</div>
+        </div>
+        <div class="icon" style="background: #f59e0b;">
+          <i class="bi bi-clock"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabla de Resultados -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-table me-2"></i>Resultados del Reporte</span>
+    <button class="btn btn-sm btn-outline-success" onclick="window.print()">
+      <i class="bi bi-printer me-2"></i>Imprimir
+    </button>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Candidato</th>
+            <th>Tipo</th>
+            <th>Empresa</th>
+            <th>Ciudad</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (servicios.length > 0) { %>
+            <% servicios.forEach(s => { 
+              let badgeClass = 'bg-secondary';
+              if (s.estado_servicio === 'Pendiente') badgeClass = 'bg-warning text-dark';
+              if (s.estado_servicio === 'En proceso') badgeClass = 'bg-info';
+              if (s.estado_servicio === 'Finalizado') badgeClass = 'bg-success';
+              if (s.estado_servicio === 'Cancelado') badgeClass = 'bg-danger';
+            %>
+              <tr>
+                <td><strong>#<%= s.id_servicio %></strong></td>
+                <td><%= s.candidato_nombre %></td>
+                <td><%= s.tipo_servicio %></td>
+                <td><%= s.empresa %></td>
+                <td><%= s.ciudad %>, <%= s.departamento %></td>
+                <td><%= new Date(s.fecha_servicio).toLocaleDateString('es-GT') %></td>
+                <td><span class="badge <%= badgeClass %>"><%= s.estado_servicio %></span></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: #94a3b8;"></i>
+                <p class="text-muted mt-2">No se encontraron servicios con los filtros aplicados</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<% if (servicios.length > 0) { %>
+<script>
+// Paleta Admin: azul oscuro
+const coloresAdmin = ['#1e3a5f', '#2563eb', '#3b82f6', '#93c5fd', '#60a5fa', '#1d4ed8'];
+const coloresEstado = {
+  'Pendiente': '#f59e0b',
+  'En proceso': '#3b82f6',
+  'Finalizado': '#10b981',
+  'Cancelado': '#ef4444'
+};
+
+// Grafica de Barras: Por Tipo
+new Chart(document.getElementById('graficaTipo'), {
+  type: 'bar',
+  data: {
+    labels: [<%- porTipo.map(r => `'${r.tipo_servicio}'`).join(',') %>],
+    datasets: [{
+      label: 'Cantidad',
+      data: [<%= porTipo.map(r => r.total).join(',') %>],
+      backgroundColor: coloresAdmin.slice(0, <%= porTipo.length %>),
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    }
+  }
+});
+
+// Grafica Donut: Por Estado
+new Chart(document.getElementById('graficaEstado'), {
+  type: 'doughnut',
+  data: {
+    labels: [<%- porEstado.map(r => `'${r.estado_servicio}'`).join(',') %>],
+    datasets: [{
+      data: [<%= porEstado.map(r => r.total).join(',') %>],
+      backgroundColor: [<%- porEstado.map(r => `coloresEstado['${r.estado_servicio}'] || '#6b7280'`).join(',') %>],
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right' }
+    }
+  }
+});
+</script>
+<% } %>
+
+<style>
+@media print {
+  .btn, .sidebar, .top-header, .card-header form, nav {
+    display: none !important;
+  }
+  .main-wrapper {
+    margin-left: 0 !important;
+  }
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  new TomSelect('#filtroEmpresaServicios', { placeholder: 'Buscar empresa...', allowEmptyOption: true });
+});
+</script>
+<%- include('../../partials/admin-footer') %>

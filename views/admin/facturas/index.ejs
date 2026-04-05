@@ -1,0 +1,168 @@
+<%- include('../../partials/admin-header', { active: 'facturas' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Gestion de Facturas</h1>
+    <p class="page-subtitle mb-0">Gestiona todas las facturas del sistema</p>
+  </div>
+  <a href="/admin/facturas/nuevo" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-2"></i>Nueva Factura
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form action="/admin/facturas" method="GET" class="row g-3 align-items-end">
+      
+      <div class="col">
+        <input type="text" class="form-control" name="buscar" placeholder="Buscar numero o empresa..." value="<%= filtros.buscar || '' %>">
+      </div>
+
+      <div class="col-md-2">
+        <select class="form-select" name="estado">
+          <option value="">Todos los estados</option>
+          <option value="Pendiente" <%= filtros.estado === 'Pendiente' ? 'selected' : '' %>>Pendiente</option>
+          <option value="Pagada" <%= filtros.estado === 'Pagada' ? 'selected' : '' %>>Pagada</option>
+          <option value="Negada" <%= filtros.estado === 'Negada' ? 'selected' : '' %>>Negada</option>
+        </select>
+      </div>
+
+      <div class="col-auto">
+        <input type="date" class="form-control" name="fecha_desde" value="<%= filtros.fecha_desde || '' %>" title="Fecha desde">
+      </div>
+
+      <div class="col-auto">
+        <input type="date" class="form-control" name="fecha_hasta" value="<%= filtros.fecha_hasta || '' %>" title="Fecha hasta">
+      </div>
+
+      <div class="col-auto d-flex gap-2">
+        
+        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center" 
+                style="min-width: 160px; height: 38px;">
+          <i class="bi bi-search me-2"></i> Filtrar
+        </button>
+
+        <a href="/admin/facturas" 
+           class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+           style="width: 38px; height: 38px; min-width: 38px; padding: 0;" 
+           title="Limpiar filtros">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Tabla de Facturas -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th style="width:15%">No. Factura</th>
+            <th style="width:20%">Empresa</th>
+            <th style="width:10%">Fecha</th>
+            <th style="width:10%">Monto</th>
+            <th style="width:10%">Estado</th>
+            <th style="width:12%">Documento</th>
+            <th style="width:23%" class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (facturas.length > 0) { %>
+            <% facturas.forEach(factura => { 
+              let badgeClass = 'bg-secondary';
+              if (factura.status_factura === 'Pendiente') badgeClass = 'bg-warning text-dark';
+              if (factura.status_factura === 'Pagada') badgeClass = 'bg-success';
+              if (factura.status_factura === 'Negada') badgeClass = 'bg-danger';
+            %>
+              <tr>
+                <td><strong><%= factura.numero_factura %></strong></td>
+                <td><%= factura.empresa %></td>
+                <td><%= factura.fecha_factura ? new Date(factura.fecha_factura).toLocaleDateString('es-HN') : 'Sin fecha' %></td>
+                <td>
+                  <% if (factura.monto_total) { %>
+                    L. <%= parseFloat(factura.monto_total).toFixed(2) %>
+                  <% } else { %>
+                    <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+                <td><span class="badge <%= badgeClass %>"><%= factura.status_factura %></span></td>
+                <td>
+                  <% if (factura.url_imagen_factura) { %>
+                    <a href="<%= factura.url_imagen_factura %>" target="_blank" class="btn btn-sm btn-info">
+                      <i class="bi bi-file-earmark me-1"></i>Ver
+                    </a>
+                  <% } else { %>
+                    <span class="text-muted small">Sin archivo</span>
+                  <% } %>
+                </td>
+                <td class="text-center">
+                  <% if (factura.status_factura === 'Pendiente') { %>
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                          <form action="/admin/facturas/<%= factura.id_factura %>/estado" method="POST" class="d-inline">
+                            <input type="hidden" name="status_factura" value="Pagada">
+                            <button type="submit" class="dropdown-item text-success">
+                              <i class="bi bi-check-circle me-2"></i>Marcar como Pagada
+                            </button>
+                          </form>
+                        </li>
+                        <li>
+                          <form action="/admin/facturas/<%= factura.id_factura %>/estado" method="POST" class="d-inline">
+                            <input type="hidden" name="status_factura" value="Negada">
+                            <button type="submit" class="dropdown-item text-danger">
+                              <i class="bi bi-x-circle me-2"></i>Marcar como Negada
+                            </button>
+                          </form>
+                        </li>
+                      </ul>
+                    </div>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <i class="bi bi-receipt" style="font-size: 3rem; color: #94a3b8;"></i>
+                <p class="text-muted mt-2">No se encontraron facturas</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+<% if (totalPages > 1) { %>
+<nav class="mt-3 px-3 pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <small class="text-muted">Mostrando <%= (page-1)*10+1 %>–<%= Math.min(page*10, total) %> de <%= total %> registros</small>
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page-1}).toString() %>"><i class="bi bi-chevron-left"></i></a>
+    </li>
+    <% for(let i = 1; i <= totalPages; i++) { %>
+      <% if (i === 1 || i === totalPages || (i >= page-2 && i <= page+2)) { %>
+        <li class="page-item <%= i === page ? 'active' : '' %>">
+          <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: i}).toString() %>"><%= i %></a>
+        </li>
+      <% } else if (i === page-3 || i === page+3) { %>
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      <% } %>
+    <% } %>
+    <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page+1}).toString() %>"><i class="bi bi-chevron-right"></i></a>
+    </li>
+  </ul>
+</nav>
+<% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/admin-footer') %>

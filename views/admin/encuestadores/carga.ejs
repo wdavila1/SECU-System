@@ -1,0 +1,188 @@
+<%- include('../../partials/admin-header', { active: 'encuestadores' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Carga de Encuestadores</h1>
+    <p class="page-subtitle mb-0">Resumen de servicios activos por encuestador</p>
+  </div>
+  <a href="/admin/expedientes" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver a Expedientes
+  </a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      
+      <div class="col">
+        <label class="form-label text-muted small fw-bold">Buscar por nombre</label>
+        <input type="text" name="buscar" class="form-control" placeholder="Nombre del encuestador..." value="<%= filtros.buscar %>">
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label text-muted small fw-bold">Puesto</label>
+        <select name="puesto" class="form-select">
+          <option value="">Todos los puestos</option>
+          <% puestos.forEach(function(p) { %>
+            <option value="<%= p.puesto %>" <%= filtros.puesto === p.puesto ? 'selected' : '' %>><%= p.puesto %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="col-auto">
+        <label class="form-label text-muted small fw-bold">Fecha Desde</label>
+        <input type="date" name="fecha_desde" class="form-control" value="<%= filtros.fecha_desde %>">
+      </div>
+      <div class="col-auto">
+        <label class="form-label text-muted small fw-bold">Fecha Hasta</label>
+        <input type="date" name="fecha_hasta" class="form-control" value="<%= filtros.fecha_hasta %>">
+      </div>
+
+      <div class="col-auto d-flex gap-2">
+        
+        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center" 
+                style="min-width: 160px; height: 38px;">
+          <i class="bi bi-search me-2"></i> Filtrar
+        </button>
+
+        <a href="/admin/encuestadores/carga" 
+           class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+           style="width: 38px; height: 38px; min-width: 38px; padding: 0;" 
+           title="Limpiar filtros">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <% if (encuestadores.length > 0) { %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Encuestador</th>
+              <th>Puestos</th>
+              <th class="text-center">Pendientes</th>
+              <th class="text-center">En Proceso</th>
+              <th class="text-center">Total Activos</th>
+              <th class="text-center">Completados</th>
+              <th>Próximo Vencimiento</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% encuestadores.forEach(enc => { 
+              const totalActivos = parseInt(enc.total_activos) || 0;
+              let badgeClass = 'bg-success';
+              if (totalActivos >= 2 && totalActivos <= 3) badgeClass = 'bg-warning text-dark';
+              if (totalActivos >= 4) badgeClass = 'bg-danger';
+              
+              let diasRestantes = null;
+              let vencBadge = '';
+              if (enc.proximo_vencimiento) {
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+                const limite = new Date(enc.proximo_vencimiento);
+                limite.setHours(0, 0, 0, 0);
+                diasRestantes = Math.ceil((limite - hoy) / 86400000);
+                if (diasRestantes < 0) {
+                  vencBadge = '<span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Vencido</span>';
+                } else if (diasRestantes <= 2) {
+                  vencBadge = '<span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>' + diasRestantes + ' dias</span>';
+                } else {
+                  vencBadge = '<span class="badge bg-secondary"><i class="bi bi-calendar me-1"></i>' + diasRestantes + ' dias</span>';
+                }
+              }
+            %>
+              <tr>
+                <td><strong><%= enc.nombre %></strong></td>
+                <td><small class="text-muted"><%= enc.puestos || 'Sin puestos' %></small></td>
+                <td class="text-center">
+                  <span class="badge bg-warning text-dark"><%= enc.pendientes || 0 %></span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-info"><%= enc.en_proceso || 0 %></span>
+                </td>
+                <td class="text-center">
+                  <span class="badge <%= badgeClass %>" style="min-width: 40px;"><%= totalActivos %></span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-success"><%= enc.completados || 0 %></span>
+                </td>
+                <td>
+                  <% if (enc.proximo_vencimiento) { %>
+                    <%- vencBadge %>
+                    <small class="text-muted ms-1"><%= new Date(enc.proximo_vencimiento).toLocaleDateString('es-HN') %></small>
+                  <% } else { %>
+                    <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+                <td class="text-center">
+                  <a href="/admin/encuestadores/<%= enc.id_empleado %>/detalle" class="btn btn-sm btn-primary">
+                    <i class="bi bi-eye me-1"></i>Ver detalle
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="text-center py-5">
+        <i class="bi bi-people" style="font-size: 3rem; color: #94a3b8;"></i>
+        <p class="text-muted mt-2">No se encontraron encuestadores con esos filtros</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Paginación -->
+<% if (totalPages > 1) { %>
+<nav class="mt-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <small class="text-muted">Mostrando <%= (page-1)*10+1 %>–<%= Math.min(page*10, total) %> de <%= total %> encuestadores</small>
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page-1}).toString() %>"><i class="bi bi-chevron-left"></i></a>
+    </li>
+    <% for(let i = 1; i <= totalPages; i++) { %>
+      <% if (i === 1 || i === totalPages || (i >= page-2 && i <= page+2)) { %>
+        <li class="page-item <%= i === page ? 'active' : '' %>">
+          <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: i}).toString() %>"><%= i %></a>
+        </li>
+      <% } else if (i === page-3 || i === page+3) { %>
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      <% } %>
+    <% } %>
+    <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page+1}).toString() %>"><i class="bi bi-chevron-right"></i></a>
+    </li>
+  </ul>
+</nav>
+<% } %>
+
+<!-- Leyenda -->
+<div class="card mt-3">
+  <div class="card-body">
+    <h6 class="mb-3">Leyenda de Carga</h6>
+    <div class="d-flex flex-wrap gap-4">
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-success">0-1</span>
+        <small class="text-muted">Disponible</small>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-warning text-dark">2-3</span>
+        <small class="text-muted">Carga moderada</small>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-danger">4+</span>
+        <small class="text-muted">Carga alta</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/admin-footer') %>

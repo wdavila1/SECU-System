@@ -1,0 +1,178 @@
+<%- include('../../partials/admin-header', { active: 'encuestadores' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Detalle de Encuestador</h1>
+    <p class="page-subtitle mb-0">Historial completo de servicios</p>
+  </div>
+  <a href="/admin/encuestadores/carga" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<!-- Card datos del encuestador + stats -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row align-items-center">
+      <div class="col-md-5">
+        <h5 class="fw-bold mb-1"><i class="bi bi-person-circle me-2 text-primary"></i><%= encuestador.nombre %></h5>
+        <p class="text-muted mb-1"><i class="bi bi-briefcase me-2"></i><%= encuestador.puestos || 'Sin puestos asignados' %></p>
+        <p class="text-muted mb-1"><i class="bi bi-envelope me-2"></i><%= encuestador.correo || '-' %></p>
+        <p class="text-muted mb-0"><i class="bi bi-telephone me-2"></i><%= encuestador.telefono || '-' %></p>
+      </div>
+      <div class="col-md-7 mt-3 mt-md-0">
+        <div class="row g-3">
+          <div class="col-4">
+            <div class="stat-card text-center">
+              <div class="value text-primary"><%= encuestador.activos %></div>
+              <div class="label">Activos</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-card text-center">
+              <div class="value text-success"><%= encuestador.completados %></div>
+              <div class="label">Completados</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-card text-center">
+              <div class="value text-danger"><%= encuestador.vencidos %></div>
+              <div class="label">Vencidos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      
+      <div class="col">
+        <label class="form-label text-muted small fw-bold">Filtrar por estado</label>
+        <select name="estado" class="form-select">
+          <option value="">Todos los estados</option>
+          <option value="Pendiente" <%= filtros.estado === 'Pendiente' ? 'selected' : '' %>>Pendiente</option>
+          <option value="En proceso" <%= filtros.estado === 'En proceso' ? 'selected' : '' %>>En proceso</option>
+          <option value="Finalizado" <%= filtros.estado === 'Finalizado' ? 'selected' : '' %>>Finalizado</option>
+          <option value="Vencido" <%= filtros.estado === 'Vencido' ? 'selected' : '' %>>Vencido</option>
+        </select>
+      </div>
+
+      <div class="col-auto d-flex gap-2">
+        
+        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center" 
+                style="min-width: 160px; height: 38px;">
+          <i class="bi bi-filter me-2"></i> Filtrar
+        </button>
+
+        <a href="/admin/encuestadores/<%= encuestadorId %>/detalle" 
+           class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+           style="width: 38px; height: 38px; min-width: 38px; padding: 0;" 
+           title="Limpiar filtros">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Tabla de servicios -->
+<div class="card">
+  <div class="card-body p-0">
+    <% if (servicios.length > 0) { %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>#ID</th>
+              <th>Candidato</th>
+              <th>Tipo</th>
+              <th>Empresa</th>
+              <th>Fecha Servicio</th>
+              <th>Fecha Límite</th>
+              <th>Estado</th>
+              <th>Expediente</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% servicios.forEach(s => {
+              const hoy = new Date(); hoy.setHours(0,0,0,0);
+              const limite = s.fecha_limite ? new Date(s.fecha_limite) : null;
+              if (limite) limite.setHours(0,0,0,0);
+              const esVencido = limite && s.estado_servicio !== 'Finalizado' && limite < hoy;
+              const esFinalizado = s.estado_servicio === 'Finalizado';
+              let rowClass = '';
+              if (esVencido) rowClass = 'table-danger';
+              else if (esFinalizado) rowClass = 'table-success';
+
+              let estadoBadge = '';
+              if (esVencido) {
+                estadoBadge = '<span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Vencido</span>';
+              } else if (s.estado_servicio === 'Pendiente') {
+                estadoBadge = '<span class="badge bg-warning text-dark">Pendiente</span>';
+              } else if (s.estado_servicio === 'En proceso') {
+                estadoBadge = '<span class="badge bg-info">En proceso</span>';
+              } else if (s.estado_servicio === 'Finalizado') {
+                estadoBadge = '<span class="badge bg-success">Finalizado</span>';
+              }
+            %>
+              <tr class="<%= rowClass %>">
+                <td><span class="text-muted">#<%= s.id_servicio %></span></td>
+                <td><strong><%= s.candidato_nombre %></strong></td>
+                <td><small><%= s.tipo_servicio %></small></td>
+                <td><small><%= s.empresa %></small></td>
+                <td><%= s.fecha_servicio ? new Date(s.fecha_servicio).toLocaleDateString('es-HN') : '-' %></td>
+                <td><%= limite ? limite.toLocaleDateString('es-HN') : '-' %></td>
+                <td><%- estadoBadge %></td>
+                <td>
+                  <% if (s.id_expediente) { %>
+                    <a href="/admin/expedientes/<%= s.id_expediente %>" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-folder2-open me-1"></i>#<%= s.id_expediente %>
+                    </a>
+                  <% } else { %>
+                    <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="text-center py-5">
+        <i class="bi bi-clipboard-x" style="font-size: 3rem; color: #94a3b8;"></i>
+        <p class="text-muted mt-2">No se encontraron servicios con esos filtros</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Paginación -->
+<% if (totalPages > 1) { %>
+<nav class="mt-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <small class="text-muted">Mostrando <%= (page-1)*10+1 %>–<%= Math.min(page*10, total) %> de <%= total %> servicios</small>
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page-1}).toString() %>"><i class="bi bi-chevron-left"></i></a>
+    </li>
+    <% for(let i = 1; i <= totalPages; i++) { %>
+      <% if (i === 1 || i === totalPages || (i >= page-2 && i <= page+2)) { %>
+        <li class="page-item <%= i === page ? 'active' : '' %>">
+          <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: i}).toString() %>"><%= i %></a>
+        </li>
+      <% } else if (i === page-3 || i === page+3) { %>
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      <% } %>
+    <% } %>
+    <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page+1}).toString() %>"><i class="bi bi-chevron-right"></i></a>
+    </li>
+  </ul>
+</nav>
+<% } %>
+
+<%- include('../../partials/admin-footer') %>

@@ -1,0 +1,181 @@
+<%- include('../../partials/admin-header', { active: 'empleados' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Gestion de Empleados</h1>
+    <p class="page-subtitle mb-0">Administra los empleados del sistema</p>
+  </div>
+  <a href="/admin/empleados/nuevo" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-2"></i>Nuevo Empleado
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form action="/admin/empleados" method="GET" class="row g-3 align-items-end">
+      
+      <div class="col">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" name="buscar" placeholder="Buscar por nombre, usuario o DNI..." value="<%= filtros.buscar || '' %>">
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <select class="form-select" name="estado">
+          <option value="">Todos los estados</option>
+          <option value="true" <%= filtros.estado === 'true' ? 'selected' : '' %>>Activos</option>
+          <option value="false" <%= filtros.estado === 'false' ? 'selected' : '' %>>Inactivos</option>
+        </select>
+      </div>
+
+      <div class="col-auto d-flex gap-2">
+        
+        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center" 
+                style="min-width: 160px; height: 38px;">
+          <i class="bi bi-search me-2"></i> Filtrar
+        </button>
+
+        <a href="/admin/empleados" 
+           class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+           style="width: 38px; height: 38px; min-width: 38px; padding: 0;" 
+           title="Limpiar filtros">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Tabla de Empleados -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Usuario</th>
+            <th>DNI</th>
+            <th>Puesto</th>
+            <th>Roles</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (empleados.length > 0) { %>
+            <% empleados.forEach(emp => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="me-3" style="width: 40px; height: 40px; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                      <%= emp.p_nombre.charAt(0).toUpperCase() %>
+                    </div>
+                    <div>
+                      <div class="fw-semibold"><%= emp.p_nombre %> <%= emp.p_apellido %></div>
+                      <small class="text-muted"><%= emp.correo %></small>
+                    </div>
+                  </div>
+                </td>
+                <td><code><%= emp.usuario %></code></td>
+                <td><%= emp.dni %></td>
+                <td><%= emp.puesto %></td>
+                <td>
+                  <% if (emp.roles) { %>
+                    <% emp.roles.split(', ').forEach(rol => { 
+                      let badgeClass = 'bg-secondary';
+                      if (rol === 'Administrador') badgeClass = 'bg-danger';
+                      if (rol === 'Digitador') badgeClass = 'bg-primary';
+                      if (rol === 'Encuestador') badgeClass = 'bg-success';
+                    %>
+                      <span class="badge <%= badgeClass %> me-1"><%= rol %></span>
+                    <% }); %>
+                  <% } else { %>
+                    <span class="text-muted">Sin roles</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (emp.estado_empleado) { %>
+                    <span class="badge bg-success-subtle text-success">Activo</span>
+                  <% } else { %>
+                    <span class="badge bg-danger-subtle text-danger">Inactivo</span>
+                  <% } %>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group">
+                    <a href="/admin/empleados/editar/<%= emp.id_empleado %>" class="btn btn-sm btn-outline-primary" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#resetModal<%= emp.id_empleado %>" title="Restablecer Contrasena">
+                      <i class="bi bi-key"></i>
+                    </button>
+                  </div>
+                  
+                  <!-- Modal Reset Password -->
+                  <div class="modal fade" id="resetModal<%= emp.id_empleado %>" tabindex="-1">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form action="/admin/empleados/reset-password/<%= emp.id_empleado %>" method="POST">
+                          <div class="modal-header">
+                            <h5 class="modal-title">Restablecer Contraseña</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                          </div>
+                          <div class="modal-body text-start">
+                            <p>Establecer nueva contraseña temporal para <strong><%= emp.p_nombre %> <%= emp.p_apellido %></strong></p>
+                            <div class="mb-3">
+                              <label class="form-label">Nueva Contraseña Temporal</label>
+                              <input type="password" class="form-control" name="nueva_contrasenia" minlength="6" required>
+                              <small class="text-muted">El usuario debera cambiar esta contraseña al iniciar sesion</small>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-warning">Restablecer</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <i class="bi bi-people" style="font-size: 3rem; color: #94a3b8;"></i>
+                <p class="text-muted mt-2">No se encontraron empleados</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+<% if (totalPages > 1) { %>
+<nav class="mt-3 px-3 pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <small class="text-muted">Mostrando <%= (page-1)*10+1 %>–<%= Math.min(page*10, total) %> de <%= total %> registros</small>
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page-1}).toString() %>"><i class="bi bi-chevron-left"></i></a>
+    </li>
+    <% for(let i = 1; i <= totalPages; i++) { %>
+      <% if (i === 1 || i === totalPages || (i >= page-2 && i <= page+2)) { %>
+        <li class="page-item <%= i === page ? 'active' : '' %>">
+          <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: i}).toString() %>"><%= i %></a>
+        </li>
+      <% } else if (i === page-3 || i === page+3) { %>
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      <% } %>
+    <% } %>
+    <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page+1}).toString() %>"><i class="bi bi-chevron-right"></i></a>
+    </li>
+  </ul>
+</nav>
+<% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/admin-footer') %>

@@ -1,0 +1,357 @@
+<%- include('../../partials/admin-header', { active: 'servicios' }) %>
+
+<%
+  const tipoNorm = (servicio.tipo_servicio || '').toLowerCase();
+  const esSocio  = tipoNorm.includes('socioecon');
+  const esPoli   = tipoNorm.includes('poligraf');
+  const esPsico  = tipoNorm.includes('psico');
+%>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Formulario del Servicio</h1>
+    <p class="page-subtitle mb-0"><%= servicio.tipo_servicio %> — <%= servicio.p_nombre %> <%= servicio.p_apellido %> (<%= servicio.dni %>)</p>
+  </div>
+  <div>
+    <% if (servicio.formulario_bloqueado) { %>
+      <form action="/admin/servicios/<%= servicio.id_servicio %>/reabrir" method="POST" class="d-inline">
+        <button type="submit" class="btn btn-warning me-2" onclick="return confirm('Esto permitira al encuestador editar el formulario nuevamente. Continuar?')">
+          <i class="bi bi-unlock me-2"></i>Reabrir Formulario
+        </button>
+      </form>
+    <% } else { %>
+      <span class="badge bg-success me-2"><i class="bi bi-pencil me-1"></i>Formulario Editable</span>
+    <% } %>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i>Volver
+    </a>
+  </div>
+</div>
+
+<!-- ===================== SOCIOECONOMICO ===================== -->
+<% if (esSocio) { %>
+  <% if (socioeconomico) { %>
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-house me-2"></i>Formulario Socioeconomico</span>
+        <span class="badge bg-<%= socioeconomico.estado_formulario === 'Finalizado' ? 'success' : 'warning' %>">
+          <%= socioeconomico.estado_formulario %>
+        </span>
+        <% if (socioeconomico && socioeconomico.tiempo_llenado_segundos) {
+             const m = Math.floor(socioeconomico.tiempo_llenado_segundos / 60);
+             const s = socioeconomico.tiempo_llenado_segundos % 60; %>
+          <small class="text-muted ms-2">
+            <i class="bi bi-stopwatch me-1"></i>Tiempo de llenado: <%= m %>m <%= s %>s
+          </small>
+        <% } %>
+      </div>
+      <div class="card-body">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <h6 class="text-primary">Informacion del Hogar</h6>
+            <table class="table table-sm">
+              <tr>
+                <td class="text-muted">Fecha de Visita</td>
+                <td><strong><%= new Date(socioeconomico.fecha_visita).toLocaleDateString('es-HN') %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Personas en Casa</td>
+                <td><strong><%= socioeconomico.personas_en_casa %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Personas que aportan ingreso</td>
+                <td><strong><%= socioeconomico.personas_aportan_ingreso %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Tipo de Vivienda</td>
+                <td><strong><%= socioeconomico.tipo_vivienda || 'N/A' %></strong></td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="text-primary">Informacion Financiera</h6>
+            <table class="table table-sm">
+              <tr>
+                <td class="text-muted">Ingreso Personal</td>
+                <td><strong>L. <%= parseFloat(socioeconomico.ingreso_mensual_personal || 0).toFixed(2) %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Ingreso del Hogar</td>
+                <td><strong>L. <%= parseFloat(socioeconomico.ingreso_mensual_hogar || 0).toFixed(2) %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Gastos Mensuales</td>
+                <td><strong>L. <%= parseFloat(socioeconomico.gastos_mensuales_aproximados || 0).toFixed(2) %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Deudas Actuales</td>
+                <td><strong>L. <%= parseFloat(socioeconomico.deudas_actuales || 0).toFixed(2) %></strong></td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="text-primary">Informacion Laboral</h6>
+            <table class="table table-sm">
+              <tr>
+                <td class="text-muted">Trabaja Actualmente</td>
+                <td><strong><%= socioeconomico.trabaja_actualmente ? 'Si' : 'No' %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Empresa Actual</td>
+                <td><strong><%= socioeconomico.empresa_actual || 'N/A' %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Tiempo Trabajando</td>
+                <td><strong><%= socioeconomico.tiempo_trabajando_meses ? socioeconomico.tiempo_trabajando_meses + ' meses' : 'N/A' %></strong></td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="text-primary">Estado Civil / Conyuge</h6>
+            <table class="table table-sm">
+              <tr>
+                <td class="text-muted">Estado Civil</td>
+                <td><strong><%= socioeconomico.estado_civil || 'N/A' %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Nombre Conyuge</td>
+                <td><strong><%= socioeconomico.nombre_conyugue || 'N/A' %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Telefono Conyuge</td>
+                <td><strong><%= socioeconomico.telefono_conyugue || 'N/A' %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Trabajo Conyuge</td>
+                <td><strong><%= socioeconomico.lugar_trabajo_conyugue || 'N/A' %></strong></td>
+              </tr>
+            </table>
+          </div>
+
+          <% if (socioeconomico.comentarios) { %>
+            <div class="col-12">
+              <h6 class="text-primary">Comentarios</h6>
+              <p class="bg-light p-3 rounded"><%= socioeconomico.comentarios %></p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <% if (documentosSocioeconomico && documentosSocioeconomico.length > 0) { %>
+      <div class="card mt-4">
+        <div class="card-header">
+          <i class="bi bi-paperclip me-2"></i>Documentos Adjuntos (<%= documentosSocioeconomico.length %>)
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            <% documentosSocioeconomico.forEach(doc => {
+               const esImagen = /\.(jpg|jpeg|png|webp|gif)$/i.test(doc.nombre_archivo || '');
+               const esPDF = /\.pdf$/i.test(doc.nombre_archivo || '');
+            %>
+            <div class="col-md-4 mb-3">
+              <div class="card h-100">
+                <% if (esImagen) { %>
+                  <a href="<%= doc.url_documento %>" target="_blank">
+                    <img src="<%= doc.url_documento %>" class="card-img-top"
+                         style="height:140px; object-fit:cover;"
+                         alt="<%= doc.tipo_documento %>">
+                  </a>
+                <% } else if (esPDF) { %>
+                  <div class="card-img-top d-flex align-items-center justify-content-center bg-light"
+                       style="height:140px;">
+                    <i class="bi bi-file-pdf text-danger" style="font-size:3rem;"></i>
+                  </div>
+                <% } else { %>
+                  <div class="card-img-top d-flex align-items-center justify-content-center bg-light"
+                       style="height:140px;">
+                    <i class="bi bi-file-earmark text-secondary" style="font-size:3rem;"></i>
+                  </div>
+                <% } %>
+                <div class="card-body p-2">
+                  <span class="badge bg-secondary mb-1"><%= doc.tipo_documento %></span>
+                  <p class="small text-muted mb-1" style="word-break:break-all;font-size:0.75rem;">
+                    <%= doc.nombre_archivo %>
+                  </p>
+                  <a href="<%= doc.url_documento %>" target="_blank"
+                     class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-<%= esImagen ? 'eye' : 'download' %> me-1"></i>
+                    <%= esImagen ? 'Ver' : 'Descargar' %>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <% }); %>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  <% } else { %>
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle me-2"></i>No se ha iniciado el formulario socioeconomico para este servicio.
+    </div>
+  <% } %>
+<% } %>
+
+<!-- ===================== POLIGRAFIA ===================== -->
+<% if (esPoli) { %>
+  <% if (poligrafia) { %>
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-activity me-2"></i>Formulario de Poligrafia</span>
+        <span class="badge bg-<%= poligrafia.estado_formulario === 'Finalizado' ? 'success' : 'warning' %>">
+          <%= poligrafia.estado_formulario %>
+        </span>
+        <% if (poligrafia && poligrafia.tiempo_llenado_segundos) {
+             const m = Math.floor(poligrafia.tiempo_llenado_segundos / 60);
+             const s = poligrafia.tiempo_llenado_segundos % 60; %>
+          <small class="text-muted ms-2">
+            <i class="bi bi-stopwatch me-1"></i>Tiempo de llenado: <%= m %>m <%= s %>s
+          </small>
+        <% } %>
+      </div>
+      <div class="card-body">
+        <div class="row g-4 mb-4">
+          <div class="col-md-4">
+            <div class="text-center p-4 rounded" style="background: <%= poligrafia.resultado === 'Verdad' ? '#dcfce7' : poligrafia.resultado === 'Engano' ? '#fef2f2' : '#fef9c3' %>">
+              <h3 class="mb-0" style="color: <%= poligrafia.resultado === 'Verdad' ? '#166534' : poligrafia.resultado === 'Engano' ? '#991b1b' : '#854d0e' %>">
+                <%= poligrafia.resultado %>
+              </h3>
+              <small class="text-muted">Resultado</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center p-4 bg-light rounded">
+              <h3 class="mb-0 text-primary"><%= poligrafia.nivel_veracidad_general %>/10</h3>
+              <small class="text-muted">Nivel de Veracidad</small>
+              <div class="progress mt-2" style="height: 10px;">
+                <div class="progress-bar bg-<%= poligrafia.nivel_veracidad_general >= 7 ? 'success' : poligrafia.nivel_veracidad_general >= 4 ? 'warning' : 'danger' %>"
+                     style="width: <%= poligrafia.nivel_veracidad_general * 10 %>%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center p-4 bg-light rounded">
+              <h3 class="mb-0">
+                <% if (poligrafia.firma_evaluador) { %>
+                  <i class="bi bi-check-circle text-success"></i>
+                <% } else { %>
+                  <i class="bi bi-x-circle text-danger"></i>
+                <% } %>
+              </h3>
+              <small class="text-muted">Firma del Evaluador</small>
+              <p class="mb-0 fw-semibold mt-1"><%= poligrafia.firma_evaluador ? 'Si' : 'No' %></p>
+            </div>
+          </div>
+        </div>
+
+        <% if (poligrafia.comentarios) { %>
+          <h6 class="text-primary">Comentarios del Evaluador</h6>
+          <p class="bg-light p-3 rounded"><%= poligrafia.comentarios %></p>
+        <% } %>
+
+        <% if (respuestasPoligrafia && respuestasPoligrafia.length > 0) { %>
+          <h6 class="text-primary mt-4">Respuestas (<%= respuestasPoligrafia.length %>)</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead>
+                <tr>
+                  <th style="width: 5%">#</th>
+                  <th style="width: 75%">Pregunta</th>
+                  <th style="width: 20%">Respuesta</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% respuestasPoligrafia.forEach(r => { %>
+                <tr>
+                  <td class="text-center"><%= r.numero_pregunta %></td>
+                  <td><%= preguntasPoligrafia[r.numero_pregunta] || 'Pregunta ' + r.numero_pregunta %></td>
+                  <td>
+                    <span class="badge <%= r.respuesta ? 'bg-success' : 'bg-secondary' %>">
+                      <%= r.respuesta ? 'Si' : 'No' %>
+                    </span>
+                  </td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle me-2"></i>No se ha iniciado el formulario de poligrafia para este servicio.
+    </div>
+  <% } %>
+<% } %>
+
+<!-- ===================== PSICOMETRICO ===================== -->
+<% if (esPsico) { %>
+  <% if (psicometrico) { %>
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-graph-up me-2"></i>Formulario Psicometrico</span>
+        <span class="badge bg-<%= psicometrico.estado_formulario === 'Finalizado' ? 'success' : 'warning' %>">
+          <%= psicometrico.estado_formulario %>
+        </span>
+        <% if (psicometrico && psicometrico.tiempo_llenado_segundos) {
+             const m = Math.floor(psicometrico.tiempo_llenado_segundos / 60);
+             const s = psicometrico.tiempo_llenado_segundos % 60; %>
+          <small class="text-muted ms-2">
+            <i class="bi bi-stopwatch me-1"></i>Tiempo de llenado: <%= m %>m <%= s %>s
+          </small>
+        <% } %>
+      </div>
+      <div class="card-body">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <h6 class="text-primary">Informacion</h6>
+            <table class="table table-sm">
+              <tr>
+                <td class="text-muted">Fecha de Evaluacion</td>
+                <td><strong><%= new Date(psicometrico.fecha_evaluacion).toLocaleString('es-HN') %></strong></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Ultima Actualizacion</td>
+                <td><strong><%= new Date(psicometrico.fecha_ultima_actualizacion).toLocaleString('es-HN') %></strong></td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-primary">Reporte PDF</h6>
+            <% if (psicometrico.url_reporte_pdf) { %>
+              <a href="<%= psicometrico.url_reporte_pdf %>" class="btn btn-primary" target="_blank">
+                <i class="bi bi-file-earmark-pdf me-2"></i>Ver Reporte PDF
+              </a>
+            <% } else { %>
+              <p class="text-muted">No se ha adjuntado reporte PDF</p>
+            <% } %>
+          </div>
+          <% if (psicometrico.comentarios) { %>
+            <div class="col-12">
+              <h6 class="text-primary">Comentarios</h6>
+              <p class="bg-light p-3 rounded"><%= psicometrico.comentarios %></p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle me-2"></i>No se ha iniciado el formulario psicometrico para este servicio.
+    </div>
+  <% } %>
+<% } %>
+
+<!-- Tipo de servicio no reconocido -->
+<% if (!esSocio && !esPoli && !esPsico) { %>
+  <div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle me-2"></i>Tipo de servicio no reconocido: <strong><%= servicio.tipo_servicio %></strong>
+  </div>
+<% } %>
+
+<%- include('../../partials/admin-footer') %>

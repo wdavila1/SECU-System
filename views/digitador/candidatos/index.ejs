@@ -1,0 +1,121 @@
+<%- include('../../partials/digitador-header', { active: 'candidatos' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Gestion de Candidatos</h1>
+    <p class="page-subtitle mb-0">Administra los candidatos para servicios</p>
+  </div>
+  <a href="/digitador/candidatos/nuevo" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-2"></i>Nuevo Candidato
+  </a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form action="/digitador/candidatos" method="GET" class="row g-3 align-items-end">
+      
+      <div class="col">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" name="buscar" placeholder="Buscar por nombre, apellido o DNI..." value="<%= filtros.buscar || '' %>">
+        </div>
+      </div>
+
+      <div class="col-auto d-flex gap-2">
+        
+        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center" 
+                style="min-width: 160px; height: 38px;">
+          <i class="bi bi-search me-2"></i> Filtrar
+        </button>
+
+        <a href="/digitador/candidatos" 
+           class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+           style="width: 38px; height: 38px; min-width: 38px; padding: 0;" 
+           title="Limpiar filtros">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Tabla de Candidatos -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th style="width: 25%">Candidato</th>
+            <th style="width: 15%">DNI</th>
+            <th style="width: 20%">Correo</th>
+            <th style="width: 12%">Telefono</th>
+            <th style="width: 18%">Ciudad</th>
+            <th style="width: 10%" class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (candidatos.length > 0) { %>
+            <% candidatos.forEach(c => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="me-3" style="width: 40px; height: 40px; background: #0e7490; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                      <%= c.p_nombre.charAt(0).toUpperCase() %>
+                    </div>
+                    <div>
+                      <div class="fw-semibold"><%= c.p_nombre %> <%= c.p_apellido %></div>
+                      <small class="text-muted"><%= c.s_nombre || '' %> <%= c.s_apellido || '' %></small>
+                    </div>
+                  </div>
+                </td>
+                <td><%= c.dni %></td>
+                <td><%= c.correo %></td>
+                <td><%= c.telefono %></td>
+                <td><%= c.ciudad %>, <%= c.departamento %></td>
+                <td class="text-center">
+                  <a href="/digitador/candidatos/editar/<%= c.id_candidato %>" class="btn btn-sm btn-primary">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-5">
+                <i class="bi bi-person-plus" style="font-size: 3rem; color: #94a3b8;"></i>
+                <p class="text-muted mt-2">No se encontraron candidatos</p>
+                <a href="/digitador/candidatos/nuevo" class="btn btn-primary">Registrar primer candidato</a>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+<% if (totalPages > 1) { %>
+<nav class="mt-3 px-3 pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <small class="text-muted">Mostrando <%= (page-1)*10+1 %>–<%= Math.min(page*10, total) %> de <%= total %> registros</small>
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page-1}).toString() %>"><i class="bi bi-chevron-left"></i></a>
+    </li>
+    <% for(let i = 1; i <= totalPages; i++) { %>
+      <% if (i === 1 || i === totalPages || (i >= page-2 && i <= page+2)) { %>
+        <li class="page-item <%= i === page ? 'active' : '' %>">
+          <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: i}).toString() %>"><%= i %></a>
+        </li>
+      <% } else if (i === page-3 || i === page+3) { %>
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      <% } %>
+    <% } %>
+    <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page+1}).toString() %>"><i class="bi bi-chevron-right"></i></a>
+    </li>
+  </ul>
+</nav>
+<% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/digitador-footer') %>

@@ -1,0 +1,163 @@
+<%- include('../../partials/digitador-header', { active: 'cotizaciones' }, { title: 'Nueva Cotización - SECU' }) %>
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="mb-3">
+  <a href="/digitador/cotizaciones" class="text-decoration-none text-muted">
+    <i class="bi bi-arrow-left me-1"></i>Volver a cotizaciones
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title mb-4">Nueva Cotización</h5>
+    <form method="POST" action="/digitador/cotizaciones/nuevo">
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label">Empresa <span class="text-danger">*</span></label>
+          <select name="id_empresa" id="selectEmpresaCot" required class="form-select">
+            <option value="">Seleccione una empresa</option>
+            <% empresas.forEach(function(empresa) { %>
+              <option value="<%= empresa.id_empresa %>"><%= empresa.empresa %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fecha de Cotización <span class="text-danger">*</span></label>
+          <input type="date" name="fecha_cotizacion" required value="<%= new Date().toISOString().split('T')[0] %>" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Vigencia (días) <span class="text-danger">*</span></label>
+          <input type="number" name="vigencia_dias" required value="30" min="1" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Contacto</label>
+          <input type="text" name="contacto" placeholder="Nombre del contacto" class="form-control">
+        </div>
+      </div>
+
+      <!-- Detalle de servicios -->
+      <h6 class="mb-3">Detalle de Servicios</h6>
+      <div id="serviciosContainer">
+        <div class="servicio-item card bg-light mb-3">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-5">
+                <label class="form-label">Tipo de Servicio</label>
+                <select name="id_tipo_servicio[]" required class="form-select tipo-select">
+                  <option value="">Seleccione</option>
+                  <% tiposServicio.forEach(function(tipo) { %>
+                    <option value="<%= tipo.id_tipo_servicio %>" data-precio="<%= tipo.precio_actual %>">
+                      <%= tipo.tipo_servicio %>
+                    </option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Cantidad</label>
+                <input type="number" name="cantidad[]" value="1" min="1" required class="form-control cantidad-input">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Precio Unitario (L.)</label>
+                <input type="number" name="precio_unitario[]" step="0.01" min="0" required class="form-control precio-input">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" onclick="agregarServicio()" class="btn btn-outline-primary mb-4">
+        <i class="bi bi-plus-lg me-2"></i>Agregar Servicio
+      </button>
+
+      <!-- Totales -->
+      <div class="card bg-light mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span>Subtotal:</span>
+            <strong id="subtotal">L. 0.00</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>IVA (15%):</span>
+            <strong id="iva">L. 0.00</strong>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between fs-5">
+            <span class="fw-bold">Total:</span>
+            <strong id="total" class="text-primary">L. 0.00</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">Observaciones</label>
+        <textarea name="observaciones" rows="3" class="form-control"></textarea>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary px-4">
+          <i class="bi bi-check-lg me-2"></i>Crear Cotización
+        </button>
+        <a href="/digitador/cotizaciones" class="btn btn-outline-secondary px-4">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function agregarServicio() {
+    const container = document.getElementById('serviciosContainer');
+    const original = container.querySelector('.servicio-item');
+    const clone = original.cloneNode(true);
+
+    clone.querySelectorAll('input').forEach(i => {
+      i.value = i.classList.contains('cantidad-input') ? '1' : '';
+    });
+    clone.querySelector('select').value = '';
+
+    const removeDiv = document.createElement('div');
+    removeDiv.className = 'd-flex justify-content-end mt-2';
+    removeDiv.innerHTML = '<button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest(\'.servicio-item\').remove(); calcularTotal();"><i class="bi bi-trash"></i> Quitar</button>';
+    clone.querySelector('.card-body').appendChild(removeDiv);
+
+    container.appendChild(clone);
+    attachListeners(clone);
+  }
+
+  function attachListeners(item) {
+    item.querySelector('.tipo-select').addEventListener('change', function() {
+      const precio = this.options[this.selectedIndex].dataset.precio;
+      if (precio) {
+        item.querySelector('.precio-input').value = precio;
+        calcularTotal();
+      }
+    });
+    item.querySelector('.precio-input').addEventListener('input', calcularTotal);
+    item.querySelector('.cantidad-input').addEventListener('input', calcularTotal);
+  }
+
+  function calcularTotal() {
+    let subtotal = 0;
+    document.querySelectorAll('.servicio-item').forEach(item => {
+      const cant = parseFloat(item.querySelector('.cantidad-input').value) || 0;
+      const precio = parseFloat(item.querySelector('.precio-input').value) || 0;
+      subtotal += cant * precio;
+    });
+    const iva = subtotal * 0.15;
+    const total = subtotal + iva;
+    document.getElementById('subtotal').textContent = 'L. ' + subtotal.toFixed(2);
+    document.getElementById('iva').textContent = 'L. ' + iva.toFixed(2);
+    document.getElementById('total').textContent = 'L. ' + total.toFixed(2);
+  }
+
+  document.querySelectorAll('.servicio-item').forEach(attachListeners);
+
+  document.addEventListener('DOMContentLoaded', function() {
+    new TomSelect('#selectEmpresaCot', { placeholder: 'Buscar empresa...', allowEmptyOption: false });
+  });
+</script>
+
+<%- include('../../partials/digitador-footer') %>

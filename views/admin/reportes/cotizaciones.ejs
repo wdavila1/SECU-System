@@ -1,0 +1,282 @@
+<%- include('../../partials/admin-header', { active: 'reportes' }) %>
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Reporte de Cotizaciones</h1>
+    <p class="page-subtitle mb-0">Analisis de cotizaciones y conversion</p>
+  </div>
+  <a href="/admin/reportes" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-funnel me-2"></i>Filtros del Reporte
+  </div>
+  <div class="card-body">
+    <form action="/admin/reportes/cotizaciones" method="GET" class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Fecha Inicio</label>
+        <input type="date" class="form-control" name="fecha_inicio" value="<%= filtros.fecha_inicio || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Fecha Fin</label>
+        <input type="date" class="form-control" name="fecha_fin" value="<%= filtros.fecha_fin || '' %>">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Estado</label>
+        <select class="form-select" name="estado">
+          <option value="">Todos</option>
+          <option value="Pendiente" <%= filtros.estado === 'Pendiente' ? 'selected' : '' %>>Pendiente</option>
+          <option value="Aceptada" <%= filtros.estado === 'Aceptada' ? 'selected' : '' %>>Aceptada</option>
+          <option value="Rechazada" <%= filtros.estado === 'Rechazada' ? 'selected' : '' %>>Rechazada</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Empresa</label>
+        <select class="form-select" name="empresa" id="filtroEmpresaCotizaciones">
+          <option value="">Todas</option>
+          <% empresas.forEach(e => { %>
+            <option value="<%= e.id_empresa %>" <%= filtros.empresa == e.id_empresa ? 'selected' : '' %>><%= e.empresa %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-search me-2"></i>Generar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Stat Cards Resumen -->
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= totales.total_cotizaciones %></div>
+          <div class="label">Total Cotizaciones</div>
+        </div>
+        <div class="icon" style="background: #1e3a5f;">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value">L. <%= parseFloat(totales.total_cotizado || 0).toLocaleString('es-HN', {minimumFractionDigits: 2}) %></div>
+          <div class="label">Total Cotizado</div>
+        </div>
+        <div class="icon" style="background: #3b82f6;">
+          <i class="bi bi-currency-dollar"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value">L. <%= parseFloat(totales.total_aceptadas || 0).toLocaleString('es-HN', {minimumFractionDigits: 2}) %></div>
+          <div class="label">Total Aceptadas</div>
+        </div>
+        <div class="icon" style="background: #10b981;">
+          <i class="bi bi-check-circle"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= tasaConversion %>%</div>
+          <div class="label">Tasa de Conversion</div>
+        </div>
+        <div class="icon" style="background: #f59e0b;">
+          <i class="bi bi-graph-up-arrow"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Graficas Chart.js -->
+<div class="row g-4 mb-4">
+  <!-- Grafica Donut: Por Estado -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-pie-chart me-2"></i>Por Estado
+      </div>
+      <div class="card-body">
+        <canvas id="graficaEstado" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Grafica Barras: Monto por Empresa Top 10 -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-bar-chart me-2"></i>Monto por Empresa Top 10
+      </div>
+      <div class="card-body">
+        <canvas id="graficaEmpresa" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Grafica Linea: Por Mes -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-graph-up me-2"></i>Tendencia Ultimos 6 Meses
+      </div>
+      <div class="card-body">
+        <canvas id="graficaMes" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabla de Resultados -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-table me-2"></i>Cotizaciones</span>
+    <button class="btn btn-sm btn-outline-success" onclick="window.print()">
+      <i class="bi bi-printer me-2"></i>Imprimir
+    </button>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Codigo</th>
+            <th>Empresa</th>
+            <th>Fecha</th>
+            <th>Subtotal</th>
+            <th>IVA</th>
+            <th>Total</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (cotizaciones.length > 0) { %>
+            <% cotizaciones.forEach(c => { 
+              let badgeClass = 'bg-secondary';
+              if (c.estado_cotizacion === 'Pendiente') badgeClass = 'bg-warning text-dark';
+              if (c.estado_cotizacion === 'Aceptada') badgeClass = 'bg-success';
+              if (c.estado_cotizacion === 'Rechazada') badgeClass = 'bg-danger';
+            %>
+              <tr>
+                <td><strong><%= c.codigo_cotizacion %></strong></td>
+                <td><%= c.empresa %></td>
+                <td><%= new Date(c.fecha_cotizacion).toLocaleDateString('es-GT') %></td>
+                <td>L. <%= parseFloat(c.subtotal || 0).toLocaleString('es-HN', {minimumFractionDigits: 2}) %></td>
+                <td>L. <%= parseFloat(c.impuesto_iva || 0).toLocaleString('es-HN', {minimumFractionDigits: 2}) %></td>
+                <td><strong>L. <%= parseFloat(c.total_cotizado || 0).toLocaleString('es-HN', {minimumFractionDigits: 2}) %></strong></td>
+                <td><span class="badge <%= badgeClass %>"><%= c.estado_cotizacion %></span></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: #94a3b8;"></i>
+                <p class="text-muted mt-2">No se encontraron cotizaciones con los filtros aplicados</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const coloresAdmin = ['#1e3a5f', '#2563eb', '#3b82f6', '#93c5fd', '#60a5fa', '#1d4ed8', '#1e40af', '#3730a3', '#4f46e5', '#6366f1'];
+const coloresEstado = { 'Pendiente': '#f59e0b', 'Aceptada': '#10b981', 'Rechazada': '#ef4444' };
+
+const porEstadoData  = <%- JSON.stringify(porEstado) %>;
+const porEmpresaData = <%- JSON.stringify(porEmpresa) %>;
+const porMesData     = <%- JSON.stringify(porMes) %>;
+
+function sinDatos(canvasId) {
+  const el = document.getElementById(canvasId);
+  if (!el) return;
+  const wrapper = el.parentElement;
+  wrapper.innerHTML = '<div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted py-4"><i class="bi bi-bar-chart fs-1 opacity-25"></i><small class="mt-2">Sin datos para mostrar</small></div>';
+}
+
+// Donut: Por Estado
+if (porEstadoData.length > 0) {
+  new Chart(document.getElementById('graficaEstado'), {
+    type: 'doughnut',
+    data: {
+      labels: porEstadoData.map(r => r.estado),
+      datasets: [{ data: porEstadoData.map(r => r.total), backgroundColor: porEstadoData.map(r => coloresEstado[r.estado] || '#6b7280'), borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+} else { sinDatos('graficaEstado'); }
+
+// Barras horizontales: Monto por Empresa
+if (porEmpresaData.length > 0) {
+  new Chart(document.getElementById('graficaEmpresa'), {
+    type: 'bar',
+    data: {
+      labels: porEmpresaData.map(r => r.empresa.length > 14 ? r.empresa.substring(0, 14) + '…' : r.empresa),
+      datasets: [{ label: 'Monto (L.)', data: porEmpresaData.map(r => r.total), backgroundColor: coloresAdmin.slice(0, porEmpresaData.length), borderRadius: 4 }]
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+  });
+} else { sinDatos('graficaEmpresa'); }
+
+// Línea: Tendencia por Mes
+if (porMesData.length > 0) {
+  new Chart(document.getElementById('graficaMes'), {
+    type: 'line',
+    data: {
+      labels: porMesData.map(r => r.mes_label),
+      datasets: [
+        { label: 'Cantidad', data: porMesData.map(r => r.cantidad), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.3, yAxisID: 'y' },
+        { label: 'Importe (L.)', data: porMesData.map(r => r.importe), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: false, tension: 0.3, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        y:  { type: 'linear', position: 'left',  beginAtZero: true, ticks: { stepSize: 1 } },
+        y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+} else { sinDatos('graficaMes'); }
+
+document.addEventListener('DOMContentLoaded', function() {
+  new TomSelect('#filtroEmpresaCotizaciones', { placeholder: 'Buscar empresa...', allowEmptyOption: true });
+});
+</script>
+
+<style>
+@media print {
+  .btn, .sidebar, .top-header, .card-header form, nav { display: none !important; }
+  .main-wrapper { margin-left: 0 !important; }
+  .card { border: 1px solid #ddd !important; box-shadow: none !important; }
+}
+</style>
+
+<%- include('../../partials/admin-footer') %>

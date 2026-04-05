@@ -1,0 +1,93 @@
+<%- include('../../partials/encuestador-header', { title: 'Mis Encuestas - SECU' }) %>
+
+<% const active = 'encuestas'; %>
+
+<div class="page-title">Encuestas Asignadas</div>
+<p class="page-subtitle">Formularios pendientes de completar</p>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label">Buscar candidato</label>
+        <input type="text" name="buscar" value="<%= filtros.buscar || '' %>" placeholder="Nombre del candidato..."
+          class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Estado</label>
+        <select name="estado" class="form-select">
+          <option value="">Todos los estados</option>
+          <option value="Pendiente"   <%= filtros.estado === 'Pendiente'   ? 'selected' : '' %>>Pendiente</option>
+          <option value="En proceso"  <%= filtros.estado === 'En proceso'  ? 'selected' : '' %>>En proceso</option>
+          <option value="Finalizado"  <%= filtros.estado === 'Finalizado'  ? 'selected' : '' %>>Finalizado</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-success w-100">
+          <i class="bi bi-search me-2"></i>Filtrar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Lista -->
+<div class="card">
+  <div class="card-body p-0">
+    <% if (encuestas && encuestas.length > 0) { %>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Candidato</th>
+              <th>Tipo de Servicio</th>
+              <th>Empresa</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% encuestas.forEach(function(encuesta) { %>
+              <tr>
+                <td><strong><%= encuesta.candidato_nombre %></strong></td>
+                <td><%= encuesta.tipo_servicio %></td>
+                <td><%= encuesta.empresa %></td>
+                <td><%= new Date(encuesta.fecha_asignacion).toLocaleDateString('es-HN') %></td>
+                <td>
+                  <span class="badge
+                    <% if (encuesta.estado_servicio === 'Pendiente') { %>bg-warning text-dark
+                    <% } else if (encuesta.estado_servicio === 'En proceso') { %>bg-info
+                    <% } else { %>bg-success<% } %>">
+                    <%= encuesta.estado_servicio %>
+                  </span>
+                </td>
+                <td>
+                  <% if (encuesta.estado_servicio !== 'Finalizado') { %>
+                    <a href="/encuestador/servicios/<%= encuesta.id_servicio %>" class="btn btn-sm btn-success">
+                      <i class="bi bi-pencil me-1"></i>
+                      <%= encuesta.estado_servicio === 'Pendiente' ? 'Iniciar' : 'Continuar' %>
+                    </a>
+                  <% } else { %>
+                    <a href="/encuestador/servicios/<%= encuesta.id_servicio %>" class="btn btn-sm btn-outline-secondary">
+                      <i class="bi bi-eye me-1"></i>Ver
+                    </a>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-clipboard-check fs-1 d-block mb-3"></i>
+        <p class="mb-1">No tienes encuestas asignadas</p>
+        <small>Las encuestas aparecerán aquí cuando te sean asignadas</small>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../../partials/encuestador-footer') %>

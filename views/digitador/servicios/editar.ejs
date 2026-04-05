@@ -1,0 +1,204 @@
+<%- include('../../partials/digitador-header', { active: 'servicios' }) %>
+
+<!-- Tom Select CDN -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Editar Servicio #<%= servicio.id_servicio %></h1>
+    <p class="page-subtitle mb-0"><%= servicio.tipo_servicio %> - <%= servicio.empresa %></p>
+  </div>
+  <a href="/digitador/servicios" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<form action="/digitador/servicios/editar/<%= servicio.id_servicio %>" method="POST">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-briefcase me-2"></i>Datos del Servicio
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Candidato</label>
+              <input type="text" class="form-control" value="<%= servicio.candidato_nombre %> - <%= servicio.candidato_dni %>" disabled>
+              <input type="hidden" name="id_candidato" value="<%= servicio.id_candidato %>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo de Servicio *</label>
+              <select class="form-select" name="id_tipo_servicio" id="editTipoServicio" required>
+                <% tiposServicio.forEach(t => { %>
+                  <option value="<%= t.id_tipo_servicio %>" <%= servicio.id_tipo_servicio == t.id_tipo_servicio ? 'selected' : '' %>><%= t.tipo_servicio %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Empresa</label>
+              <input type="text" class="form-control" value="<%= servicio.empresa %>" disabled>
+              <input type="hidden" name="id_empresa" value="<%= servicio.id_empresa %>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Departamento *</label>
+              <select id="editDepartamento" class="form-select" required>
+                <option value="">Seleccionar departamento...</option>
+                <% departamentos.forEach(d => { %>
+                  <option value="<%= d.id_departamento %>"><%= d.departamento %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Ciudad *</label>
+              <select name="id_ciudad" id="editCiudad" class="form-select" required disabled>
+                <option value="">Seleccione departamento primero...</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha del Servicio *</label>
+              <input type="date" class="form-control" name="fecha_servicio" value="<%= servicio.fecha_servicio ? new Date(servicio.fecha_servicio).toISOString().split('T')[0] : '' %>" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Estado *</label>
+              <select class="form-select" name="estado_servicio" required>
+                <option value="Pendiente" <%= servicio.estado_servicio === 'Pendiente' ? 'selected' : '' %>>Pendiente</option>
+                <option value="En proceso" <%= servicio.estado_servicio === 'En proceso' ? 'selected' : '' %>>En proceso</option>
+                <option value="Finalizado" <%= servicio.estado_servicio === 'Finalizado' ? 'selected' : '' %>>Finalizado</option>
+                <option value="Cancelado" <%= servicio.estado_servicio === 'Cancelado' ? 'selected' : '' %>>Cancelado</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-person-check me-2"></i>Asignacion
+        </div>
+        <div class="card-body">
+          <label class="form-label">Encuestador</label>
+          <select class="form-select" name="id_encuestador" id="editEncuestador">
+            <option value="">Sin asignar</option>
+            <% encuestadores.forEach(enc => { %>
+              <option value="<%= enc.id_empleado %>" <%= servicio.id_encuestador == enc.id_empleado ? 'selected' : '' %>><%= enc.p_nombre %> <%= enc.p_apellido %></option>
+            <% }); %>
+          </select>
+          <small class="text-muted">Solo encuestadores compatibles con el tipo de servicio</small>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-receipt me-2"></i>Factura Asociada
+        </div>
+        <div class="card-body">
+          <select class="form-select" name="id_factura" id="editFactura">
+            <option value="">Sin factura</option>
+            <% facturas.forEach(f => { %>
+              <option value="<%= f.id_factura %>" <%= servicio.id_factura == f.id_factura ? 'selected' : '' %>><%= f.numero_factura %></option>
+            <% }); %>
+          </select>
+          <small class="text-muted">Facturas de la misma empresa</small>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+    </button>
+    <a href="/digitador/servicios" class="btn btn-outline-secondary ms-2">Cancelar</a>
+  </div>
+</form>
+
+<script>
+// Cascada Departamento -> Ciudad
+document.getElementById('editDepartamento').addEventListener('change', function() {
+  const idDep = this.value;
+  const selectCiudad = document.getElementById('editCiudad');
+  if (!idDep) {
+    selectCiudad.innerHTML = '<option value="">Seleccione departamento primero...</option>';
+    selectCiudad.disabled = true;
+    return;
+  }
+  fetch('/admin/api/ciudades?id_departamento=' + idDep)
+    .then(r => r.json())
+    .then(data => {
+      selectCiudad.innerHTML = '<option value="">Seleccionar ciudad...</option>' +
+        data.map(c => `<option value="${c.id_ciudad}">${c.ciudad}</option>`).join('');
+      selectCiudad.disabled = false;
+    })
+    .catch(() => {
+      selectCiudad.innerHTML = '<option value="">Error al cargar</option>';
+    });
+});
+
+// Pre-cargar departamento y ciudad al editar
+document.addEventListener('DOMContentLoaded', async function() {
+  const ciudadActual = '<%= servicio.id_ciudad %>';
+  const deptoActual  = '<%= servicio.id_departamento %>';
+  if (deptoActual) {
+    document.getElementById('editDepartamento').value = deptoActual;
+    try {
+      const r = await fetch('/admin/api/ciudades?id_departamento=' + deptoActual);
+      const ciudades = await r.json();
+      const sel = document.getElementById('editCiudad');
+      sel.innerHTML = '<option value="">Seleccionar ciudad...</option>' +
+        ciudades.map(c => `<option value="${c.id_ciudad}" ${c.id_ciudad == ciudadActual ? 'selected' : ''}>${c.ciudad}</option>`).join('');
+      sel.disabled = false;
+    } catch (e) {
+      console.error('Error pre-cargando ciudades:', e);
+    }
+  }
+});
+
+// Filtrado dinamico de encuestadores por tipo de servicio
+let tomSelectEncuestadorEdit = null;
+const encuestadorActual = '<%= servicio.id_encuestador || "" %>';
+
+function cargarEncuestadores(idTipo, seleccionarActual = false) {
+  const selectEnc = document.getElementById('editEncuestador');
+  
+  // Destruir instancia anterior de Tom Select si existe
+  if (tomSelectEncuestadorEdit) { tomSelectEncuestadorEdit.destroy(); tomSelectEncuestadorEdit = null; }
+  
+  if (!idTipo) {
+    selectEnc.innerHTML = '<option value="">Seleccione tipo de servicio primero...</option>';
+    return;
+  }
+  
+  fetch('/admin/api/encuestadores-por-tipo?id_tipo_servicio=' + idTipo)
+    .then(r => r.json())
+    .then(data => {
+      selectEnc.innerHTML = '<option value="">Sin asignar</option>' +
+        data.map(e => `<option value="${e.id_empleado}" ${seleccionarActual && e.id_empleado == encuestadorActual ? 'selected' : ''}>${e.nombre_completo}</option>`).join('');
+      tomSelectEncuestadorEdit = new TomSelect('#editEncuestador', {
+        placeholder: 'Buscar encuestador...',
+        allowEmptyOption: true
+      });
+    });
+}
+
+document.getElementById('editTipoServicio').addEventListener('change', function() {
+  cargarEncuestadores(this.value, false);
+});
+
+// Cargar encuestadores al inicio con el tipo actual
+const tipoActual = '<%= servicio.id_tipo_servicio %>';
+if (tipoActual) {
+  cargarEncuestadores(tipoActual, true);
+}
+
+// Tom Select para factura
+new TomSelect('#editFactura', {
+  placeholder: 'Buscar factura...',
+  allowEmptyOption: true
+});
+</script>
+
+<%- include('../../partials/digitador-footer') %>

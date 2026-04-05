@@ -1,0 +1,171 @@
+<%- include('../../partials/digitador-header', { active: 'servicios' }) %>
+
+<!-- Tom Select CDN -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Nuevo Servicio</h1>
+    <p class="page-subtitle mb-0">Complete el formulario para crear un nuevo servicio</p>
+  </div>
+  <a href="/digitador/servicios" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<form action="/digitador/servicios/nuevo" method="POST">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-briefcase me-2"></i>Datos del Servicio
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Candidato *</label>
+              <select class="form-select" name="id_candidato" required>
+                <option value="">Seleccionar candidato...</option>
+                <% candidatos.forEach(c => { %>
+                  <option value="<%= c.id_candidato %>"><%= c.p_nombre %> <%= c.p_apellido %> - <%= c.dni %></option>
+                <% }); %>
+              </select>
+              <small class="text-muted">Si el candidato no existe, <a href="/digitador/candidatos/nuevo" target="_blank">registrelo primero</a></small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo de Servicio *</label>
+              <select class="form-select" name="id_tipo_servicio" id="nuevoTipoServicio" required>
+                <option value="">Seleccionar tipo...</option>
+                <% tiposServicio.forEach(t => { %>
+                  <option value="<%= t.id_tipo_servicio %>"><%= t.tipo_servicio %> - L. <%= parseFloat(t.precio_actual).toFixed(2) %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Empresa *</label>
+              <select class="form-select" name="id_empresa" required>
+                <option value="">Seleccionar empresa...</option>
+                <% empresas.forEach(e => { %>
+                  <option value="<%= e.id_empresa %>"><%= e.empresa %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Departamento *</label>
+              <select id="nuevoDepartamento" class="form-select" required>
+                <option value="">Seleccionar departamento...</option>
+                <% departamentos.forEach(d => { %>
+                  <option value="<%= d.id_departamento %>"><%= d.departamento %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Ciudad donde se realizara *</label>
+              <select class="form-select" name="id_ciudad" id="nuevoCiudad" required disabled>
+                <option value="">Seleccione departamento primero...</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha del Servicio *</label>
+              <input type="date" class="form-control" name="fecha_servicio" value="<%= new Date().toISOString().split('T')[0] %>" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-person-check me-2"></i>Asignacion (Opcional)
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">Encuestador</label>
+            <select class="form-select" name="id_encuestador" id="nuevoEncuestador" disabled>
+              <option value="">Seleccione tipo de servicio primero...</option>
+            </select>
+            <small class="text-muted">Solo encuestadores compatibles con el tipo de servicio</small>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-link me-2"></i>Vincular Cotizacion (Opcional)
+        </div>
+        <div class="card-body">
+          <select class="form-select" name="id_cotizacion">
+            <option value="">Sin cotizacion</option>
+            <% cotizaciones.forEach(cot => { %>
+              <option value="<%= cot.id_cotizacion %>"><%= cot.codigo_cotizacion %> - <%= cot.empresa %></option>
+            <% }); %>
+          </select>
+          <small class="text-muted">Solo cotizaciones aceptadas</small>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-check-lg me-2"></i>Crear Servicio
+    </button>
+    <a href="/digitador/servicios" class="btn btn-outline-secondary ms-2">Cancelar</a>
+  </div>
+</form>
+
+<script>
+// Cascada Departamento -> Ciudad
+document.getElementById('nuevoDepartamento').addEventListener('change', function() {
+  const idDep = this.value;
+  const selectCiudad = document.getElementById('nuevoCiudad');
+  if (!idDep) {
+    selectCiudad.innerHTML = '<option value="">Seleccione departamento primero...</option>';
+    selectCiudad.disabled = true;
+    return;
+  }
+  fetch('/admin/api/ciudades?id_departamento=' + idDep)
+    .then(r => r.json())
+    .then(data => {
+      selectCiudad.innerHTML = '<option value="">Seleccionar ciudad...</option>' +
+        data.map(c => `<option value="${c.id_ciudad}">${c.ciudad}</option>`).join('');
+      selectCiudad.disabled = false;
+    })
+    .catch(() => {
+      selectCiudad.innerHTML = '<option value="">Error al cargar</option>';
+    });
+});
+
+// Filtrado dinamico de encuestadores por tipo de servicio
+let tomSelectEncuestadorNuevo = null;
+
+document.getElementById('nuevoTipoServicio').addEventListener('change', function() {
+  const idTipo = this.value;
+  const selectEnc = document.getElementById('nuevoEncuestador');
+  
+  // Destruir instancia anterior de Tom Select si existe
+  if (tomSelectEncuestadorNuevo) { tomSelectEncuestadorNuevo.destroy(); tomSelectEncuestadorNuevo = null; }
+  
+  if (!idTipo) {
+    selectEnc.innerHTML = '<option value="">Seleccione tipo de servicio primero...</option>';
+    selectEnc.disabled = true;
+    return;
+  }
+  
+  fetch('/admin/api/encuestadores-por-tipo?id_tipo_servicio=' + idTipo)
+    .then(r => r.json())
+    .then(data => {
+      selectEnc.innerHTML = '<option value="">Sin asignar</option>' +
+        data.map(e => `<option value="${e.id_empleado}">${e.nombre_completo}</option>`).join('');
+      selectEnc.disabled = false;
+      tomSelectEncuestadorNuevo = new TomSelect('#nuevoEncuestador', {
+        placeholder: 'Buscar encuestador...',
+        allowEmptyOption: true
+      });
+    });
+});
+</script>
+
+<%- include('../../partials/digitador-footer') %>

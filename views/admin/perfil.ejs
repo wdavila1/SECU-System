@@ -1,0 +1,98 @@
+<%- include('../partials/admin-header', { active: 'perfil' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Mi Perfil</h1>
+    <p class="page-subtitle mb-0">Administra tu informacion personal</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Información del Perfil -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem; font-weight: 700; margin: 0 auto 20px;">
+          <%= empleado.p_nombre.charAt(0).toUpperCase() %><%= empleado.p_apellido.charAt(0).toUpperCase() %>
+        </div>
+        <h4 class="mb-1"><%= empleado.p_nombre %> <%= empleado.p_apellido %></h4>
+        <p class="text-muted mb-3"><%= empleado.puesto %></p>
+        <div class="d-flex justify-content-center gap-2">
+          <span class="badge bg-danger">Administrador</span>
+        </div>
+        <hr>
+        <div class="text-start">
+          <p class="mb-2"><i class="bi bi-person text-primary me-2"></i>Usuario: <strong><%= empleado.usuario %></strong></p>
+          <p class="mb-2"><i class="bi bi-envelope text-primary me-2"></i><%= empleado.correo %></p>
+          <p class="mb-2"><i class="bi bi-telephone text-primary me-2"></i><%= empleado.telefono %></p>
+          <p class="mb-0"><i class="bi bi-calendar text-primary me-2"></i>Desde: <%= new Date(empleado.fecha_contratacion).toLocaleDateString('es-GT') %></p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card mt-4">
+      <div class="card-header">
+        <i class="bi bi-shield-lock me-2"></i>Seguridad
+      </div>
+      <div class="card-body">
+        <p class="text-muted small">Ultimo cambio de contraseña:</p>
+        <p class="fw-semibold mb-3"><%= empleado.fecha_ultimo_cambio ? new Date(empleado.fecha_ultimo_cambio).toLocaleDateString('es-GT') : 'Nunca' %></p>
+        <a href="/cambiar-contrasenia" class="btn btn-outline-primary w-100">
+          <i class="bi bi-key me-2"></i>Cambiar Contraseña
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Editar Información -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-pencil me-2"></i>Editar Informacion de Contacto
+      </div>
+      <div class="card-body">
+        <form action="/admin/perfil" method="POST">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-control" value="<%= empleado.p_nombre %> <%= empleado.s_nombre || '' %>" disabled>
+              <small class="text-muted">El nombre no puede ser modificado</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Apellido</label>
+              <input type="text" class="form-control" value="<%= empleado.p_apellido %> <%= empleado.s_apellido || '' %>" disabled>
+              <small class="text-muted">El apellido no puede ser modificado</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">DNI</label>
+              <input type="text" class="form-control" value="<%= empleado.dni %>" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Correo Electronico *</label>
+              <input type="email" class="form-control" name="correo" value="<%= empleado.correo %>" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Telefono *</label>
+              <input type="text" class="form-control" name="telefono" value="<%= empleado.telefono %>" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Puesto</label>
+              <input type="text" class="form-control" value="<%= empleado.puesto %>" disabled>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Direccion *</label>
+              <textarea class="form-control" name="direccion" rows="2" required><%= empleado.direccion %></textarea>
+            </div>
+          </div>
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

@@ -1,0 +1,223 @@
+<%- include('../../partials/encuestador-header') %>
+
+<% const active = 'servicios'; %>
+
+<div class="mb-4">
+    <a href="/encuestador/servicios/<%= servicio.id_servicio %>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Volver al Servicio
+    </a>
+</div>
+
+<div class="page-title">Formulario Psicometrico</div>
+<p class="page-subtitle">
+    Candidato: <strong><%= servicio.p_nombre %> <%= servicio.p_apellido %></strong> | 
+    DNI: <%= servicio.dni %>
+</p>
+
+<!-- Informacion del servicio -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-6 col-md-3">
+                <small class="text-muted">Empresa</small>
+                <div class="fw-bold"><%= servicio.empresa %></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <small class="text-muted">Tipo de Servicio</small>
+                <div class="fw-bold"><%= servicio.tipo_servicio %></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <small class="text-muted">Estado Formulario</small>
+                <div>
+                    <span class="badge <%= formulario.estado_formulario === 'Finalizado' ? 'bg-success' : 'bg-warning text-dark' %>">
+                        <%= formulario.estado_formulario %>
+                    </span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <small class="text-muted">Fecha Evaluacion</small>
+                <div class="fw-bold">
+                    <%= new Date(formulario.fecha_evaluacion).toLocaleDateString('es-HN') %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% if (formulario.estado_formulario === 'Finalizado') { %>
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Este formulario ya fue finalizado y no puede ser modificado.
+    </div>
+<% } %>
+
+<form method="POST" action="/encuestador/formularios/psicometrico/<%= servicio.id_servicio %>" enctype="multipart/form-data">
+    <input type="hidden" name="tiempo_llenado_segundos" id="tiempoLlenado" value="<%= formulario.tiempo_llenado_segundos || 0 %>">
+    
+    <!-- Subir Reporte PDF -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0">
+                <i class="bi bi-file-pdf me-2"></i>Reporte de Evaluacion Psicometrica
+            </h6>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">
+                Suba el reporte PDF generado por la herramienta de evaluacion psicometrica.
+            </p>
+            
+            <%# Bug 2 fix: Reporte siempre visible si existe, independiente del estado %>
+            <% if (formulario.url_reporte_pdf) { %>
+                <div class="alert alert-success d-flex align-items-center">
+                    <i class="bi bi-file-earmark-pdf fs-3 me-3"></i>
+                    <div>
+                        <strong>Reporte cargado</strong>
+                        <div>
+                            <a href="<%= formulario.url_reporte_pdf %>" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                <i class="bi bi-eye me-1"></i>Ver Reporte
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+            
+            <%# Input de subida solo si NO está finalizado %>
+            <% if (formulario.estado_formulario !== 'Finalizado') { %>
+                <div class="mb-3">
+                    <label class="form-label">
+                        <%= formulario.url_reporte_pdf ? 'Reemplazar Reporte PDF' : 'Subir Reporte PDF' %>
+                    </label>
+                    <input type="file" name="reporte_pdf" class="form-control" accept=".pdf"
+                           id="reporteInput">
+                    <div class="form-text">Archivos PDF hasta 10MB</div>
+                </div>
+                
+                <div id="filePreview" class="d-none alert alert-info">
+                    <i class="bi bi-file-pdf me-2"></i>
+                    <span id="fileName"></span>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Comentarios -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0">
+                <i class="bi bi-chat-text me-2"></i>Comentarios y Observaciones
+            </h6>
+        </div>
+        <div class="card-body">
+            <textarea name="comentarios" class="form-control" rows="5" 
+                      placeholder="Ingrese comentarios adicionales sobre la evaluacion psicometrica..."
+                      <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>><%= formulario.comentarios || '' %></textarea>
+        </div>
+    </div>
+
+    <% if (formulario.estado_formulario !== 'Finalizado') { %>
+        <!-- Botones de accion -->
+        <div class="card">
+            <div class="card-body d-flex flex-wrap gap-2 justify-content-end">
+                <button type="submit" name="finalizar" value="false" class="btn btn-outline-primary">
+                    <i class="bi bi-save me-2"></i>Guardar Borrador
+                </button>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirmarFinalizar">
+                    <i class="bi bi-check-circle me-2"></i>Finalizar Evaluacion
+                </button>
+            </div>
+        </div>
+    <% } %>
+    
+    <input type="hidden" name="finalizar" id="finalizarInput" value="false">
+</form>
+
+<!-- Modal de confirmacion -->
+<div class="modal fade" id="confirmarFinalizar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Finalizacion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Esta seguro de finalizar esta evaluacion psicometrica?</p>
+                <%# Bug 1 fix: advertencia dinámica — JS la muestra/oculta según PDF guardado o seleccionado %>
+                <p class="text-warning" id="advertenciaPDF" style="display:none;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    No ha cargado un reporte PDF. Es recomendable subir el reporte antes de finalizar.
+                </p>
+                <p class="text-muted small">Una vez finalizada, no podra modificar la informacion.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="finalizarFormulario()">
+                    <i class="bi bi-check-circle me-2"></i>Si, Finalizar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Bug 1 fix: control dinámico de advertencia PDF en el modal
+    function actualizarAdvertenciaPDF() {
+        const tienePDFGuardado = <%= formulario.url_reporte_pdf ? 'true' : 'false' %>;
+        const inputFile = document.getElementById('reporteInput');
+        const tieneArchivoSeleccionado = inputFile && inputFile.files.length > 0;
+        const adv = document.getElementById('advertenciaPDF');
+        if (adv) {
+            adv.style.display = (tienePDFGuardado || tieneArchivoSeleccionado) ? 'none' : 'block';
+        }
+    }
+
+    // Preview del archivo seleccionado
+    document.getElementById('reporteInput')?.addEventListener('change', function() {
+        const filePreview = document.getElementById('filePreview');
+        const fileName = document.getElementById('fileName');
+        
+        if (this.files.length > 0) {
+            fileName.textContent = this.files[0].name;
+            filePreview.classList.remove('d-none');
+        } else {
+            filePreview.classList.add('d-none');
+        }
+        // Actualizar advertencia al cambiar el input
+        actualizarAdvertenciaPDF();
+    });
+
+    // Actualizar advertencia al abrir el modal
+    document.getElementById('confirmarFinalizar')?.addEventListener('show.bs.modal', function() {
+        actualizarAdvertenciaPDF();
+    });
+
+    function finalizarFormulario() {
+        document.getElementById('finalizarInput').value = 'true';
+        document.querySelector('form').submit();
+    }
+</script>
+
+<% if (formulario.estado_formulario !== 'Finalizado') { %>
+<div class="position-fixed bg-dark text-white rounded px-3 py-2 d-flex align-items-center gap-2"
+     style="top: 70px; right: 20px; z-index: 1050; font-size: 0.9rem; opacity: 0.85;">
+  <i class="bi bi-stopwatch"></i>
+  <span id="displayTimer">0:00</span>
+</div>
+<script>
+  let segundosTimer = parseInt(document.getElementById('tiempoLlenado').value) || 0;
+  (function() {
+    const m = Math.floor(segundosTimer / 60);
+    const s = segundosTimer % 60;
+    document.getElementById('displayTimer').textContent = m + ':' + String(s).padStart(2, '0');
+  })();
+  const intervalTimer = setInterval(() => {
+    segundosTimer++;
+    document.getElementById('tiempoLlenado').value = segundosTimer;
+    const m = Math.floor(segundosTimer / 60);
+    const s = segundosTimer % 60;
+    document.getElementById('displayTimer').textContent = m + ':' + String(s).padStart(2, '0');
+  }, 1000);
+  document.querySelector('form').addEventListener('submit', () => clearInterval(intervalTimer));
+</script>
+<% } %>
+
+<%- include('../../partials/encuestador-footer') %>

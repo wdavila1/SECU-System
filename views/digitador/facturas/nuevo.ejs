@@ -1,0 +1,141 @@
+<%- include('../../partials/digitador-header', { active: 'facturas' }) %>
+
+<!-- Tom Select CDN -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Nueva Factura</h1>
+    <p class="page-subtitle mb-0">Complete el formulario para registrar una nueva factura</p>
+  </div>
+  <a href="/digitador/facturas" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <i class="bi bi-file-earmark-plus me-2"></i>Datos de la Factura
+  </div>
+  <div class="card-body">
+    <form method="POST" action="/digitador/facturas/nuevo" enctype="multipart/form-data">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Empresa <span class="text-danger">*</span></label>
+          <select name="id_empresa" id="selectEmpresa" class="form-select" required>
+            <option value="">Seleccione una empresa</option>
+            <% empresas.forEach(function(emp) { %>
+              <option value="<%= emp.id_empresa %>"><%= emp.empresa %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Numero de Factura <span class="text-danger">*</span></label>
+          <input type="text" name="numero_factura" class="form-control" required placeholder="Ej: FAC-001-2024">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Fecha de Factura</label>
+          <input type="date" name="fecha_factura" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Estado <span class="text-danger">*</span></label>
+          <select name="status_factura" class="form-select" required>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Pagada">Pagada</option>
+            <option value="Negada">Negada</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Monto Total <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text">L.</span>
+            <input type="number" name="monto_total" class="form-control" required step="0.01" min="0" placeholder="0.00">
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Cotizacion Relacionada</label>
+          <select name="id_cotizacion" id="selectCotizacion" class="form-select" disabled>
+            <option value="">Seleccione una empresa primero</option>
+          </select>
+          <small class="text-muted">Solo muestra cotizaciones aceptadas de la empresa seleccionada</small>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Imagen de la Factura</label>
+          <div class="border rounded p-4 text-center bg-light">
+            <input type="file" name="imagen_factura" id="imagen_factura" accept="image/*,.pdf" class="d-none">
+            <label for="imagen_factura" class="cursor-pointer d-block">
+              <i class="bi bi-cloud-upload text-muted mb-3" style="font-size: 3rem;"></i>
+              <p class="text-muted mb-1">Haz clic para subir o arrastra la imagen</p>
+              <p class="text-muted small">PNG, JPG, PDF hasta 10MB</p>
+            </label>
+            <p id="fileName" class="mt-2 text-primary d-none"></p>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <hr>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-2"></i>Registrar Factura
+          </button>
+          <a href="/digitador/facturas" class="btn btn-outline-secondary ms-2">Cancelar</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.cursor-pointer { cursor: pointer; }
+</style>
+
+<script>
+// Inicializar Tom Select para empresa
+const tomSelectEmpresa = new TomSelect('#selectEmpresa', {
+  placeholder: 'Buscar empresa...',
+  allowEmptyOption: false
+});
+
+// Mostrar nombre de archivo seleccionado
+document.getElementById('imagen_factura').addEventListener('change', function() {
+  const fileName = document.getElementById('fileName');
+  if (this.files.length > 0) {
+    fileName.textContent = 'Archivo seleccionado: ' + this.files[0].name;
+    fileName.classList.remove('d-none');
+  } else {
+    fileName.classList.add('d-none');
+  }
+});
+
+// Filtrar cotizaciones por empresa
+document.getElementById('selectEmpresa').addEventListener('change', function() {
+  const idEmpresa = this.value;
+  const selectCotizacion = document.getElementById('selectCotizacion');
+  
+  if (!idEmpresa) {
+    selectCotizacion.innerHTML = '<option value="">Seleccione una empresa primero</option>';
+    selectCotizacion.disabled = true;
+    return;
+  }
+  
+  fetch('/digitador/api/cotizaciones-por-empresa?id_empresa=' + idEmpresa)
+    .then(r => r.json())
+    .then(data => {
+      selectCotizacion.innerHTML = '<option value="">Sin cotizacion</option>' +
+        data.map(c => `<option value="${c.id_cotizacion}">${c.codigo_cotizacion}</option>`).join('');
+      selectCotizacion.disabled = false;
+    })
+    .catch(err => {
+      console.error('Error cargando cotizaciones:', err);
+      selectCotizacion.innerHTML = '<option value="">Error al cargar</option>';
+    });
+});
+</script>
+
+<%- include('../../partials/digitador-footer') %>

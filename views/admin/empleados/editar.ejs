@@ -1,0 +1,172 @@
+<%- include('../../partials/admin-header', { active: 'empleados' }) %>
+
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Editar Empleado</h1>
+    <p class="page-subtitle mb-0">Modificando: <%= empleado.p_nombre %> <%= empleado.p_apellido %></p>
+  </div>
+  <a href="/admin/empleados" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<form action="/admin/empleados/editar/<%= empleado.id_empleado %>" method="POST">
+  <div class="row g-4">
+    <!-- Datos Personales -->
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-person me-2"></i>Datos Personales
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Primer Nombre *</label>
+              <input type="text" class="form-control" name="p_nombre" value="<%= empleado.p_nombre %>" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Segundo Nombre</label>
+              <input type="text" class="form-control" name="s_nombre" value="<%= empleado.s_nombre || '' %>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Primer Apellido *</label>
+              <input type="text" class="form-control" name="p_apellido" value="<%= empleado.p_apellido %>" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Segundo Apellido</label>
+              <input type="text" class="form-control" name="s_apellido" value="<%= empleado.s_apellido || '' %>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">DNI</label>
+              <input type="text" class="form-control" value="<%= empleado.dni %>" disabled>
+              <small class="text-muted">El DNI no puede ser modificado</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Genero</label>
+              <select class="form-select" name="genero">
+                <option value="">Seleccionar...</option>
+                <option value="Masculino" <%= empleado.genero === 'Masculino' ? 'selected' : '' %>>Masculino</option>
+                <option value="Femenino" <%= empleado.genero === 'Femenino' ? 'selected' : '' %>>Femenino</option>
+                <option value="Otro" <%= empleado.genero === 'Otro' ? 'selected' : '' %>>Otro</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha de Nacimiento *</label>
+              <input type="date" class="form-control" name="fecha_nacimiento" value="<%= empleado.fecha_nacimiento ? new Date(empleado.fecha_nacimiento).toISOString().split('T')[0] : '' %>" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Telefono *</label>
+              <input type="text" class="form-control" name="telefono" value="<%= empleado.telefono %>" 
+              placeholder="Ej: 99887766 (sin guiones)" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Correo Electronico *</label>
+              <input type="email" class="form-control" name="correo" value="<%= empleado.correo %>" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Ciudad *</label>
+              <select class="form-select" name="id_ciudad" required>
+                <option value="">Seleccionar ciudad...</option>
+                <% let currentDept = ''; %>
+                <% ciudades.forEach(ciudad => { %>
+                  <% if (ciudad.departamento !== currentDept) { 
+                    currentDept = ciudad.departamento; %>
+                    <optgroup label="<%= currentDept %>">
+                  <% } %>
+                  <option value="<%= ciudad.id_ciudad %>" <%= empleado.id_ciudad == ciudad.id_ciudad ? 'selected' : '' %>><%= ciudad.ciudad %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Direccion *</label>
+              <textarea class="form-control" name="direccion" rows="2" required><%= empleado.direccion %></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Datos de Empleado -->
+    <div class="col-lg-6">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-briefcase me-2"></i>Datos de Empleado
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Usuario *</label>
+              <input type="text" class="form-control" name="usuario" value="<%= empleado.usuario %>" maxlength="15" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Puestos de Trabajo *</label>
+              <select class="form-select" name="puestos" id="selectPuestos" multiple required>
+                <% puestos.forEach(puesto => { %>
+                  <option value="<%= puesto.id_puesto %>" <%= puestosEmpleado.includes(puesto.id_puesto) ? 'selected' : '' %>><%= puesto.puesto %></option>
+                <% }); %>
+              </select>
+              <small class="text-muted">Seleccione uno o mas puestos de trabajo</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha de Contratacion *</label>
+              <input type="date" class="form-control" name="fecha_contratacion" value="<%= empleado.fecha_contratacion ? new Date(empleado.fecha_contratacion).toISOString().split('T')[0] : '' %>" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Estado</label>
+              <select class="form-select" name="estado_empleado">
+                <option value="true" <%= empleado.estado_empleado ? 'selected' : '' %>>Activo</option>
+                <option value="false" <%= !empleado.estado_empleado ? 'selected' : '' %>>Inactivo</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-person-gear me-2"></i>Roles del Sistema
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">Seleccione los roles que tendra el empleado</p>
+          <% roles.forEach(rol => { 
+            let iconClass = 'bi-person';
+            let colorClass = 'secondary';
+            if (rol.rol === 'Administrador') { iconClass = 'bi-shield-fill'; colorClass = 'danger'; }
+            if (rol.rol === 'Digitador') { iconClass = 'bi-keyboard'; colorClass = 'primary'; }
+            if (rol.rol === 'Encuestador') { iconClass = 'bi-clipboard-check'; colorClass = 'success'; }
+            const isChecked = rolesEmpleado.includes(rol.id_rol);
+          %>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" name="roles" value="<%= rol.id_rol %>" id="rol<%= rol.id_rol %>" <%= isChecked ? 'checked' : '' %>>
+              <label class="form-check-label" for="rol<%= rol.id_rol %>">
+                <i class="bi <%= iconClass %> text-<%= colorClass %> me-1"></i>
+                <%= rol.rol %>
+              </label>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary btn-lg">
+      <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+    </button>
+    <a href="/admin/empleados" class="btn btn-outline-secondary btn-lg ms-2">Cancelar</a>
+  </div>
+</form>
+
+<script>
+// Inicializar Tom Select para puestos
+new TomSelect('#selectPuestos', {
+  plugins: ['remove_button'],
+  placeholder: 'Seleccionar puestos...',
+  maxItems: null
+});
+</script>
+
+<%- include('../../partials/admin-footer') %>

@@ -1,0 +1,165 @@
+<%- include('../../partials/digitador-header', { active: 'cotizaciones' },{ title: 'Gestión de Cotizaciones - SECU' }) %>
+
+<!-- Tom Select CDN -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="page-title">Cotizaciones</div>
+<p class="page-subtitle">Gestión de cotizaciones de servicios</p>
+
+<!-- Barra superior -->
+<div class="d-flex justify-content-end mb-3">
+  <a href="/digitador/cotizaciones/nuevo" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-2"></i>Nueva Cotización
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      
+      <div class="col">
+        <label class="form-label text-muted small fw-bold">Buscar</label>
+        <input type="text" name="buscar" value="<%= filtros.buscar || '' %>" placeholder="Buscar empresa o codigo..." class="form-control">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label text-muted small fw-bold">Empresa</label>
+        <select name="empresa" id="filtroCotizacionEmpresa" class="form-select">
+          <option value="">Todas las empresas</option>
+          <% if (typeof empresas !== 'undefined') { %>
+            <% empresas.forEach(emp => { %>
+              <option value="<%= emp.id_empresa %>" <%= filtros.empresa == emp.id_empresa ? 'selected' : '' %>><%= emp.empresa %></option>
+            <% }); %>
+          <% } %>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label text-muted small fw-bold">Estado</label>
+        <select name="estado" class="form-select">
+          <option value="">Todos</option>
+          <option value="Pendiente" <%= filtros.estado === 'Pendiente' ? 'selected' : '' %>>Pendiente</option>
+          <option value="Aceptada" <%= filtros.estado === 'Aceptada' ? 'selected' : '' %>>Aceptada</option>
+          <option value="Rechazada" <%= filtros.estado === 'Rechazada' ? 'selected' : '' %>>Rechazada</option>
+        </select>
+      </div>
+
+      <div class="col-auto d-flex gap-2">
+        
+        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center" 
+                style="min-width: 160px; height: 38px;">
+          <i class="bi bi-search me-2"></i> Filtrar
+        </button>
+
+        <a href="/digitador/cotizaciones" 
+           class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+           style="width: 38px; height: 38px; min-width: 38px; padding: 0;" 
+           title="Limpiar filtros">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="card">
+  <div class="card-body p-0">
+    <% if (cotizaciones && cotizaciones.length > 0) { %>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th style="width: 15%">Codigo</th>
+              <th style="width: 25%">Empresa</th>
+              <th style="width: 12%">Fecha</th>
+              <th style="width: 12%">Subtotal</th>
+              <th style="width: 12%">Total</th>
+              <th style="width: 12%">Estado</th>
+              <th style="width: 12%" class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% cotizaciones.forEach(function(cot) { %>
+              <tr>
+                <td><strong><%= cot.codigo_cotizacion %></strong></td>
+                <td><%= cot.empresa %></td>
+                <td><%= new Date(cot.fecha_cotizacion).toLocaleDateString('es-HN') %></td>
+                <td>L. <%= parseFloat(cot.subtotal || 0).toFixed(2) %></td>
+                <td><strong>L. <%= parseFloat(cot.total_cotizado || 0).toFixed(2) %></strong></td>
+                <td>
+                  <span class="badge
+                    <% if (cot.estado_cotizacion === 'Pendiente') { %>bg-warning text-dark
+                    <% } else if (cot.estado_cotizacion === 'Aceptada') { %>bg-success
+                    <% } else { %>bg-danger<% } %>">
+                    <%= cot.estado_cotizacion %>
+                  </span>
+                </td>
+                <td class="text-center">
+                  <a href="/digitador/cotizaciones/<%= cot.id_cotizacion %>" class="btn btn-sm btn-primary me-1" title="Ver detalle">
+                    <i class="bi bi-eye me-1"></i>Ver
+                  </a>
+                  <% if (cot.estado_cotizacion === 'Pendiente') { %>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                      title="Eliminar cotizacion"
+                      onclick="confirmarAccion(
+                        'Eliminar Cotizacion',
+                        'Se eliminara la cotizacion <%= cot.codigo_cotizacion %>. Solo es posible si no tiene facturas relacionadas.',
+                        '/digitador/cotizaciones/<%= cot.id_cotizacion %>/eliminar'
+                      )">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+<% if (totalPages > 1) { %>
+<nav class="mt-3 px-3 pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <small class="text-muted">Mostrando <%= (page-1)*10+1 %>–<%= Math.min(page*10, total) %> de <%= total %> registros</small>
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page-1}).toString() %>"><i class="bi bi-chevron-left"></i></a>
+    </li>
+    <% for(let i = 1; i <= totalPages; i++) { %>
+      <% if (i === 1 || i === totalPages || (i >= page-2 && i <= page+2)) { %>
+        <li class="page-item <%= i === page ? 'active' : '' %>">
+          <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: i}).toString() %>"><%= i %></a>
+        </li>
+      <% } else if (i === page-3 || i === page+3) { %>
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      <% } %>
+    <% } %>
+    <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page+1}).toString() %>"><i class="bi bi-chevron-right"></i></a>
+    </li>
+  </ul>
+</nav>
+<% } %>
+      </div>
+    <% } else { %>
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-file-earmark-text fs-1 d-block mb-3"></i>
+        <p class="mb-2">No hay cotizaciones registradas</p>
+        <a href="/digitador/cotizaciones/nuevo" class="btn btn-primary btn-sm">
+          Crear primera cotizacion
+        </a>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  new TomSelect('#filtroCotizacionEmpresa', {
+    placeholder: 'Buscar empresa...',
+    allowEmptyOption: true
+  });
+});
+</script>
+
+<%- include('../../partials/digitador-footer') %>

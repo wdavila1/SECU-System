@@ -1,0 +1,287 @@
+<%- include('../../partials/digitador-header', { active: 'expedientes' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Formularios del Servicio</h1>
+    <p class="page-subtitle mb-0"><%= servicio.tipo_servicio %> - <%= servicio.p_nombre %> <%= servicio.p_apellido %></p>
+  </div>
+  <a href="javascript:history.back()" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Informacion del Servicio -->
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-briefcase me-2"></i>Datos del Servicio
+      </div>
+      <div class="card-body">
+        <p class="mb-2"><strong>Candidato:</strong> <%= servicio.p_nombre %> <%= servicio.p_apellido %></p>
+        <p class="mb-2"><strong>DNI:</strong> <%= servicio.dni %></p>
+        <p class="mb-2"><strong>Tipo:</strong> <%= servicio.tipo_servicio %></p>
+        <p class="mb-2"><strong>Empresa:</strong> <%= servicio.empresa %></p>
+        <p class="mb-2">
+          <strong>Estado:</strong>
+          <% 
+            let badgeClass = 'bg-warning text-dark';
+            if (servicio.estado_servicio === 'Finalizado') badgeClass = 'bg-success';
+            if (servicio.estado_servicio === 'En proceso') badgeClass = 'bg-info';
+            if (servicio.estado_servicio === 'Cancelado') badgeClass = 'bg-danger';
+          %>
+          <span class="badge <%= badgeClass %>"><%= servicio.estado_servicio %></span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formularios -->
+  <div class="col-lg-8">
+    <% if (socioeconomico) { %>
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <i class="bi bi-house me-2"></i>Formulario Socioeconomico
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <small class="text-muted">Tipo de Vivienda</small>
+            <p class="mb-0 fw-semibold"><%= socioeconomico.tipo_vivienda || 'N/A' %></p>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted">Trabaja Actualmente</small>
+            <p class="mb-0 fw-semibold"><%= socioeconomico.trabaja_actualmente ? 'Si' : 'No' %></p>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted">Empresa Actual</small>
+            <p class="mb-0 fw-semibold"><%= socioeconomico.empresa_actual || 'N/A' %></p>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted">Ingreso Personal</small>
+            <p class="mb-0 fw-semibold">L. <%= parseFloat(socioeconomico.ingreso_mensual_personal || 0).toFixed(2) %></p>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted">Ingreso Hogar</small>
+            <p class="mb-0 fw-semibold">L. <%= parseFloat(socioeconomico.ingreso_mensual_hogar || 0).toFixed(2) %></p>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted">Estado Civil</small>
+            <p class="mb-0 fw-semibold"><%= socioeconomico.estado_civil || 'N/A' %></p>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted">Personas en Casa</small>
+            <p class="mb-0 fw-semibold"><%= socioeconomico.personas_en_casa %></p>
+          </div>
+          <% if (socioeconomico.comentarios) { %>
+          <div class="col-12">
+            <small class="text-muted">Comentarios</small>
+            <p class="mb-0 bg-light p-2 rounded"><%= socioeconomico.comentarios %></p>
+          </div>
+          <% } %>
+        </div>
+        
+        <% if (documentosSocioeconomico && documentosSocioeconomico.length > 0) { %>
+        <hr>
+        <h6><i class="bi bi-paperclip me-2"></i>Documentos Adjuntos</h6>
+        <div class="row g-2">
+          <% documentosSocioeconomico.forEach(doc => {
+             const esImagen = /\.(jpg|jpeg|png|webp|gif)$/i.test(doc.nombre_archivo || '');
+             const esPDF = /\.pdf$/i.test(doc.nombre_archivo || '');
+          %>
+          <div class="col-md-4 mb-3">
+            <div class="card h-100">
+              <% if (esImagen) { %>
+                <a href="<%= doc.url_documento %>" target="_blank">
+                  <img src="<%= doc.url_documento %>" class="card-img-top"
+                       style="height:140px; object-fit:cover;"
+                       alt="<%= doc.tipo_documento %>">
+                </a>
+              <% } else if (esPDF) { %>
+                <div class="card-img-top d-flex align-items-center justify-content-center bg-light"
+                     style="height:140px;">
+                  <i class="bi bi-file-pdf text-danger" style="font-size:3rem;"></i>
+                </div>
+              <% } else { %>
+                <div class="card-img-top d-flex align-items-center justify-content-center bg-light"
+                     style="height:140px;">
+                  <i class="bi bi-file-earmark text-secondary" style="font-size:3rem;"></i>
+                </div>
+              <% } %>
+              <div class="card-body p-2">
+                <span class="badge bg-secondary mb-1"><%= doc.tipo_documento %></span>
+                <p class="small text-muted mb-1" style="word-break:break-all;font-size:0.75rem;">
+                  <%= doc.nombre_archivo %>
+                </p>
+                <a href="<%= doc.url_documento %>" target="_blank"
+                   class="btn btn-sm btn-outline-primary w-100">
+                  <i class="bi bi-<%= esImagen ? 'eye' : 'download' %> me-1"></i>
+                  <%= esImagen ? 'Ver' : 'Descargar' %>
+                </a>
+              </div>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+        <% } %>
+        
+        <div class="mt-3 text-end">
+          <span class="badge <%= socioeconomico.estado_formulario === 'Finalizado' ? 'bg-success' : 'bg-warning text-dark' %>">
+            <%= socioeconomico.estado_formulario %>
+          </span>
+          <% if (socioeconomico && socioeconomico.tiempo_llenado_segundos) {
+               const m = Math.floor(socioeconomico.tiempo_llenado_segundos / 60);
+               const s = socioeconomico.tiempo_llenado_segundos % 60; %>
+            <small class="text-muted ms-2">
+              <i class="bi bi-stopwatch me-1"></i>Tiempo de llenado: <%= m %>m <%= s %>s
+            </small>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+    <% if (poligrafia) { %>
+    <div class="card mb-4">
+      <div class="card-header bg-danger text-white">
+        <i class="bi bi-activity me-2"></i>Formulario de Poligrafia
+      </div>
+      <div class="card-body">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-4">
+            <small class="text-muted">Resultado</small>
+            <p class="mb-0">
+              <% 
+                let resBadgeClass = 'bg-warning text-dark';
+                if (poligrafia.resultado === 'Verdad') resBadgeClass = 'bg-success';
+                if (poligrafia.resultado === 'Engano') resBadgeClass = 'bg-danger';
+              %>
+              <span class="badge <%= resBadgeClass %> fs-6"><%= poligrafia.resultado %></span>
+            </p>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted">Nivel de Veracidad</small>
+            <div class="progress mt-1" style="height: 20px;">
+              <div class="progress-bar bg-<%= poligrafia.nivel_veracidad_general >= 7 ? 'success' : poligrafia.nivel_veracidad_general >= 4 ? 'warning' : 'danger' %>" 
+                   style="width: <%= poligrafia.nivel_veracidad_general * 10 %>%">
+                <%= poligrafia.nivel_veracidad_general %>/10
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted">Firmado</small>
+            <p class="mb-0 fw-semibold"><%= poligrafia.firma_evaluador ? 'Si' : 'No' %></p>
+          </div>
+          <% if (poligrafia.comentarios) { %>
+          <div class="col-12">
+            <small class="text-muted">Comentarios del Evaluador</small>
+            <p class="mb-0 bg-light p-2 rounded"><%= poligrafia.comentarios %></p>
+          </div>
+          <% } %>
+        </div>
+        
+        <% if (respuestasPoligrafia && respuestasPoligrafia.length > 0) { %>
+        <hr>
+        <h6><i class="bi bi-list-check me-2"></i>Respuestas (<%= respuestasPoligrafia.length %>)</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered">
+            <thead>
+              <tr>
+                <th style="width: 5%">#</th>
+                <th style="width: 75%">Pregunta</th>
+                <th style="width: 20%">Respuesta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% respuestasPoligrafia.forEach(r => { %>
+              <tr>
+                <td class="text-center"><%= r.numero_pregunta %></td>
+                <td><%= preguntasPoligrafia[r.numero_pregunta] || 'Pregunta ' + r.numero_pregunta %></td>
+                <td>
+                  <span class="badge <%= r.respuesta ? 'bg-success' : 'bg-secondary' %>">
+                    <%= r.respuesta ? 'Si' : 'No' %>
+                  </span>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+        
+        <div class="mt-3 text-end">
+          <span class="badge <%= poligrafia.estado_formulario === 'Finalizado' ? 'bg-success' : 'bg-warning text-dark' %>">
+            <%= poligrafia.estado_formulario %>
+          </span>
+          <% if (poligrafia && poligrafia.tiempo_llenado_segundos) {
+               const m = Math.floor(poligrafia.tiempo_llenado_segundos / 60);
+               const s = poligrafia.tiempo_llenado_segundos % 60; %>
+            <small class="text-muted ms-2">
+              <i class="bi bi-stopwatch me-1"></i>Tiempo de llenado: <%= m %>m <%= s %>s
+            </small>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+    <% if (psicometrico) { %>
+    <div class="card mb-4">
+      <div class="card-header bg-info text-white">
+        <i class="bi bi-graph-up me-2"></i>Formulario Psicometrico
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <small class="text-muted">Estado del Formulario</small>
+            <p class="mb-0 fw-semibold"><%= psicometrico.estado_formulario %></p>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted">Reporte PDF</small>
+            <p class="mb-0">
+              <% if (psicometrico.url_reporte_pdf) { %>
+                <a href="<%= psicometrico.url_reporte_pdf %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-file-pdf me-1"></i>Ver PDF
+                </a>
+              <% } else { %>
+                <span class="text-muted">No adjuntado</span>
+              <% } %>
+            </p>
+          </div>
+          <% if (psicometrico.comentarios) { %>
+          <div class="col-12">
+            <small class="text-muted">Comentarios</small>
+            <p class="mb-0 bg-light p-2 rounded"><%= psicometrico.comentarios %></p>
+          </div>
+          <% } %>
+        </div>
+        
+        <div class="mt-3 text-end">
+          <span class="badge <%= psicometrico.estado_formulario === 'Finalizado' ? 'bg-success' : 'bg-warning text-dark' %>">
+            <%= psicometrico.estado_formulario %>
+          </span>
+          <% if (psicometrico && psicometrico.tiempo_llenado_segundos) {
+               const m = Math.floor(psicometrico.tiempo_llenado_segundos / 60);
+               const s = psicometrico.tiempo_llenado_segundos % 60; %>
+            <small class="text-muted ms-2">
+              <i class="bi bi-stopwatch me-1"></i>Tiempo de llenado: <%= m %>m <%= s %>s
+            </small>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+    <% if (!socioeconomico && !poligrafia && !psicometrico) { %>
+    <div class="card">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-file-earmark-x" style="font-size: 3rem; color: #94a3b8;"></i>
+        <p class="text-muted mt-3">No hay formularios completados para este servicio.</p>
+        <p class="text-muted small">Los formularios seran completados por el encuestador asignado.</p>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../../partials/digitador-footer') %>

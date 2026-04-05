@@ -1,0 +1,156 @@
+<%- include('../../partials/admin-header', { active: 'cotizaciones' }, { title: 'Detalle Cotizacion - SECU' }) %>
+
+<div class="mb-3">
+  <a href="/admin/cotizaciones" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Volver a Cotizaciones
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Columna principal -->
+  <div class="col-lg-8">
+
+    <!-- Cabecera -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="bi bi-file-earmark-text me-2"></i>
+          <%= cotizacion.codigo_cotizacion %>
+        </h5>
+        <span class="badge fs-6
+          <% if (cotizacion.estado_cotizacion === 'Pendiente') { %>bg-warning text-dark
+          <% } else if (cotizacion.estado_cotizacion === 'Aceptada') { %>bg-success
+          <% } else { %>bg-danger<% } %>">
+          <%= cotizacion.estado_cotizacion %>
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <small class="text-muted d-block">Empresa</small>
+            <strong><%= cotizacion.empresa %></strong>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted d-block">Fecha de Cotizacion</small>
+            <strong><%= new Date(cotizacion.fecha_cotizacion).toLocaleDateString('es-HN') %></strong>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted d-block">Vigencia</small>
+            <strong><%= cotizacion.vigencia_dias %> dias</strong>
+            <% 
+              const fechaVencimiento = new Date(cotizacion.fecha_cotizacion);
+              fechaVencimiento.setDate(fechaVencimiento.getDate() + parseInt(cotizacion.vigencia_dias));
+              const hoy = new Date();
+              const vencida = hoy > fechaVencimiento && cotizacion.estado_cotizacion === 'Pendiente';
+            %>
+            <br><small class="<%= vencida ? 'text-danger' : 'text-muted' %>">
+              Vence: <%= fechaVencimiento.toLocaleDateString('es-HN') %>
+              <%= vencida ? '- Vencida' : '' %>
+            </small>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted d-block">Contacto</small>
+            <strong><%= cotizacion.contacto || '—' %></strong>
+          </div>
+          <% if (cotizacion.observaciones) { %>
+          <div class="col-12">
+            <small class="text-muted d-block">Observaciones</small>
+            <p class="mb-0 fst-italic text-secondary"><%= cotizacion.observaciones %></p>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalle de servicios -->
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">Detalle de Servicios</h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Tipo de Servicio</th>
+                <th class="text-center">Cantidad</th>
+                <th class="text-end">Precio Unitario</th>
+                <th class="text-end">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (detalles && detalles.length > 0) { %>
+                <% detalles.forEach(function(detalle) { %>
+                  <tr>
+                    <td><%= detalle.tipo_servicio %></td>
+                    <td class="text-center"><%= detalle.cantidad %></td>
+                    <td class="text-end">L. <%= parseFloat(detalle.precio_unitario).toFixed(2) %></td>
+                    <td class="text-end">L. <%= parseFloat(detalle.subtotal_linea).toFixed(2) %></td>
+                  </tr>
+                <% }); %>
+              <% } else { %>
+                <tr><td colspan="4" class="text-center text-muted py-3">Sin detalle registrado</td></tr>
+              <% } %>
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                <td class="text-end">L. <%= parseFloat(cotizacion.subtotal).toFixed(2) %></td>
+              </tr>
+              <tr>
+                <td colspan="3" class="text-end"><strong>ISV (15%):</strong></td>
+                <td class="text-end">L. <%= parseFloat(cotizacion.impuesto_iva).toFixed(2) %></td>
+              </tr>
+              <tr class="table-primary">
+                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                <td class="text-end"><strong>L. <%= parseFloat(cotizacion.total_cotizado).toFixed(2) %></strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Columna lateral -->
+  <div class="col-lg-4">
+
+    <!-- Informacion del estado -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Informacion</h6>
+      </div>
+      <div class="card-body">
+        <p class="mb-2">
+          <strong>Estado actual:</strong>
+          <span class="badge
+            <% if (cotizacion.estado_cotizacion === 'Pendiente') { %>bg-warning text-dark
+            <% } else if (cotizacion.estado_cotizacion === 'Aceptada') { %>bg-success
+            <% } else { %>bg-danger<% } %>">
+            <%= cotizacion.estado_cotizacion %>
+          </span>
+        </p>
+        <div class="alert alert-info mb-0 small">
+          <i class="bi bi-info-circle me-1"></i>
+          El estado de las cotizaciones se gestiona desde el rol de digitador.
+        </div>
+      </div>
+    </div>
+
+    <!-- Exportar -->
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0"><i class="bi bi-printer me-2"></i>Exportar</h6>
+      </div>
+      <div class="card-body">
+        <button onclick="window.print()" class="btn btn-outline-primary w-100">
+          <i class="bi bi-printer me-2"></i>Imprimir Cotizacion
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<%- include('../../partials/admin-footer') %>

@@ -1,0 +1,137 @@
+<%- include('../partials/digitador-header', { active: 'dashboard' }) %>
+
+<h1 class="page-title">Panel de Control</h1>
+<p class="page-subtitle">Bienvenido, <%= user.nombre_completo %></p>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="icon" style="background: #0e7490;">
+          <i class="bi bi-briefcase"></i>
+        </div>
+        <span class="badge bg-primary-subtle text-primary">Este mes</span>
+      </div>
+      <div class="value mt-3"><%= serviciosMes %></div>
+      <div class="label">Servicios creados</div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="icon" style="background: #f59e0b;">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <span class="badge bg-warning-subtle text-warning">Pendientes</span>
+      </div>
+      <div class="value mt-3"><%= serviciosPendientes %></div>
+      <div class="label">Servicios pendientes</div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="icon" style="background: #10b981;">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <span class="badge bg-success-subtle text-success">Cotizaciones</span>
+      </div>
+      <div class="value mt-3"><%= cotizacionesMes %></div>
+      <div class="label">Cotizaciones del mes</div>
+    </div>
+  </div>
+</div>
+
+<!-- Accesos Rápidos -->
+<div class="row g-4 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-lightning me-2"></i>Accesos Rapidos
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3 col-6">
+            <a href="/digitador/candidatos/nuevo" class="btn btn-outline-primary w-100 py-3">
+              <i class="bi bi-person-plus d-block mb-1" style="font-size: 1.5rem;"></i>
+              Nuevo Candidato
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="/digitador/expedientes/nuevo" class="btn btn-outline-success w-100 py-3">
+              <i class="bi bi-folder-plus d-block mb-1" style="font-size: 1.5rem;"></i>
+              Nuevo Expediente
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="/digitador/cotizaciones/nuevo" class="btn btn-outline-warning w-100 py-3">
+              <i class="bi bi-file-earmark-plus d-block mb-1" style="font-size: 1.5rem;"></i>
+              Nueva Cotizacion
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="/digitador/facturas/nuevo" class="btn btn-outline-info w-100 py-3">
+              <i class="bi bi-receipt d-block mb-1" style="font-size: 1.5rem;"></i>
+              Subir Factura
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Últimos Servicios -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-clock-history me-2"></i>Ultimos Servicios</span>
+    <a href="/digitador/servicios" class="btn btn-sm btn-outline-primary">Ver todos</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Candidato</th>
+            <th>Tipo</th>
+            <th>Empresa</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (ultimosServicios.length > 0) { %>
+            <% ultimosServicios.forEach(s => { 
+              let badgeClass = 'bg-secondary';
+              if (s.estado_servicio === 'Pendiente') badgeClass = 'bg-warning';
+              if (s.estado_servicio === 'En proceso') badgeClass = 'bg-info';
+              if (s.estado_servicio === 'Finalizado') badgeClass = 'bg-success';
+              if (s.estado_servicio === 'Cancelado') badgeClass = 'bg-danger';
+            %>
+              <tr>
+                <td><strong>#<%= s.id_servicio %></strong></td>
+                <td><%= s.candidato_nombre %></td>
+                <td><span class="badge bg-primary-subtle text-primary"><%= s.tipo_servicio %></span></td>
+                <td><%= s.empresa %></td>
+                <td><%= new Date(s.fecha_servicio).toLocaleDateString('es-GT') %></td>
+                <td><span class="badge <%= badgeClass %>"><%= s.estado_servicio %></span></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">
+                No hay servicios registrados
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/digitador-footer') %>

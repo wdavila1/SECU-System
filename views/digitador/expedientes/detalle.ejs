@@ -1,0 +1,636 @@
+<%- include('../../partials/digitador-header', { active: 'expedientes' }) %>
+
+<!-- Tom Select CDN -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Expediente #<%= expediente.id_expediente %></h1>
+    <p class="page-subtitle mb-0"><%= expediente.p_nombre %> <%= expediente.p_apellido %> - <%= expediente.empresa %></p>
+  </div>
+  <div>
+    <a href="/digitador/expedientes/<%= expediente.id_expediente %>/informe" class="btn btn-success me-2" target="_blank">
+      <i class="bi bi-file-earmark-pdf me-2"></i>Ver Informe
+    </a>
+    <a href="/digitador/expedientes" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i>Volver
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Datos del Expediente -->
+  <div class="col-lg-3">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-person me-2"></i>Datos del Candidato
+      </div>
+      <div class="card-body">
+        <p class="mb-2"><strong>Nombre:</strong> <%= expediente.p_nombre %> <%= expediente.s_nombre || '' %> <%= expediente.p_apellido %> <%= expediente.s_apellido || '' %></p>
+        <p class="mb-2"><strong>DNI:</strong> <%= expediente.dni %></p>
+        <p class="mb-2"><strong>Correo:</strong> <%= expediente.correo %></p>
+        <p class="mb-2"><strong>Telefono:</strong> <%= expediente.telefono %></p>
+        <hr>
+        <p class="mb-2"><strong>Empresa:</strong> <%= expediente.empresa %></p>
+        <p class="mb-2"><strong>Fecha Expediente:</strong> <%= new Date(expediente.fecha_expediente).toLocaleDateString('es-HN') %></p>
+        <p class="mb-2">
+          <strong>Estado:</strong>
+          <% 
+            let badgeClass = 'bg-warning text-dark';
+            if (expediente.estado === 'Finalizado') badgeClass = 'bg-success';
+            if (expediente.estado === 'Cancelado') badgeClass = 'bg-danger';
+          %>
+          <span class="badge <%= badgeClass %>"><%= expediente.estado %></span>
+        </p>
+        
+        <!-- Gestion de estado del expediente -->
+        <form action="/digitador/expedientes/<%= expediente.id_expediente %>/estado" method="POST" class="mt-2">
+          <div class="input-group input-group-sm">
+            <select name="estado" class="form-select form-select-sm">
+              <option value="En proceso" <%= expediente.estado === 'En proceso' ? 'selected' : '' %>>En proceso</option>
+              <option value="Finalizado" <%= expediente.estado === 'Finalizado' ? 'selected' : '' %>>Finalizado</option>
+              <option value="Cancelado" <%= expediente.estado === 'Cancelado' ? 'selected' : '' %>>Cancelado</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Actualizar</button>
+          </div>
+        </form>
+        
+        <% if (servicios.length === 0) { %>
+          <button type="button" class="btn btn-sm btn-outline-danger w-100 mt-2"
+            onclick="confirmarAccion(
+              'Eliminar Expediente',
+              '¿Esta seguro? Esta accion no se puede deshacer.',
+              '/digitador/expedientes/<%= expediente.id_expediente %>/eliminar'
+            )">
+            <i class="bi bi-trash me-1"></i>Eliminar Expediente
+          </button>
+        <% } %>
+        
+        <% if (expediente.observaciones) { %>
+          <hr>
+          <p class="mb-0"><strong>Observaciones:</strong></p>
+          <p class="text-muted small"><%= expediente.observaciones %></p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Servicios del Expediente -->
+  <div class="col-lg-9">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-briefcase me-2"></i>Servicios del Expediente</span>
+        <div class="d-flex gap-2">
+          <a href="/digitador/encuestadores/carga" class="btn btn-sm btn-outline-secondary" title="Ver carga de encuestadores">
+            <i class="bi bi-people me-1"></i>Ver Carga
+          </a>
+          <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#agregarServicioModal">
+            <i class="bi bi-plus-lg me-1"></i>Agregar Servicio
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <% if (servicios.length > 0) { %>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th style="width:14%">Tipo</th>
+                  <th style="width:13%">Encuestador</th>
+                  <th style="width:9%">Ciudad</th>
+                  <th style="width:8%">Fecha</th>
+                  <th style="width:9%">Vence</th>
+                  <th style="width:9%">Estado</th>
+                  <th style="width:10%">Factura</th>
+                  <th style="width:8%">Precio</th>
+                  <th style="width:10%" class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% servicios.forEach(s => { %>
+                  <tr>
+                    <td><strong><%= s.tipo_servicio %></strong></td>
+                    <td><%= s.encuestador_nombre %></td>
+                    <td><%= s.ciudad %></td>
+                    <td><%= new Date(s.fecha_servicio).toLocaleDateString('es-HN') %></td>
+                    <td>
+                      <% if (s.fecha_limite && s.estado_servicio !== 'Finalizado' && s.estado_servicio !== 'Cancelado') {
+                        const hoy = new Date();
+                        hoy.setHours(0, 0, 0, 0);
+                        const limite = new Date(s.fecha_limite);
+                        limite.setHours(0, 0, 0, 0);
+                        const diasRestantes = Math.ceil((limite - hoy) / 86400000);
+                      %>
+                        <% if (diasRestantes < 0) { %>
+                          <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Vencido</span>
+                        <% } else if (diasRestantes <= 2) { %>
+                          <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i><%= diasRestantes %> dias</span>
+                        <% } else { %>
+                          <span class="badge bg-secondary"><i class="bi bi-calendar me-1"></i><%= diasRestantes %> dias</span>
+                        <% } %>
+                      <% } else { %>
+                        <span class="text-muted">-</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% 
+                        let sClass = 'bg-warning text-dark';
+                        if (s.estado_servicio === 'Finalizado') sClass = 'bg-success';
+                        if (s.estado_servicio === 'En proceso') sClass = 'bg-info';
+                        if (s.estado_servicio === 'Cancelado') sClass = 'bg-danger';
+                      %>
+                      <span class="badge <%= sClass %>"><%= s.estado_servicio %></span>
+                    </td>
+                    <td>
+                      <% if (s.numero_factura) { %>
+                        <span class="badge bg-secondary"><%= s.numero_factura %></span>
+                      <% } else { %>
+                        <span class="text-muted">-</span>
+                      <% } %>
+                    </td>
+                    <td style="white-space:nowrap">L. <%= parseFloat(s.precio_actual).toFixed(2) %></td>
+                    <td class="text-center" style="white-space:nowrap">
+                      <a href="/digitador/servicios/<%= s.id_servicio %>/formularios" class="btn btn-sm btn-primary me-1" title="Formularios" data-bs-toggle="tooltip" data-bs-placement="top">
+                        <i class="bi bi-file-text"></i>
+                      </a>
+                      <% if (s.estado_servicio !== 'Finalizado' && s.estado_servicio !== 'Cancelado' && !s.formulario_bloqueado) { %>
+                        <button type="button" class="btn btn-sm btn-outline-primary me-1 btn-editar-servicio"
+                          title="Editar servicio" data-bs-toggle="tooltip" data-bs-placement="top"
+                          data-servicio-id="<%= s.id_servicio %>"
+                          data-expediente-id="<%= s.id_expediente %>"
+                          data-tipo-servicio="<%= s.id_tipo_servicio %>"
+                          data-encuestador="<%= s.id_encuestador || '' %>"
+                          data-ciudad="<%= s.id_ciudad %>"
+                          data-departamento="<%= s.id_departamento || '' %>"
+                          data-fecha="<%= s.fecha_servicio %>"
+                          data-direccion="<%= s.direccion_servicio || '' %>"
+                          data-factura="<%= s.id_factura || '' %>">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                      <% } %>
+                      <% if (s.estado_servicio === 'Pendiente' && !s.formulario_bloqueado) { %>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                          title="Eliminar servicio" data-bs-toggle="tooltip" data-bs-placement="top"
+                          onclick="confirmarAccion(
+                            'Eliminar Servicio',
+                            'Se eliminara el servicio de <%= s.tipo_servicio %>. Esta accion no se puede deshacer.',
+                            '/digitador/expedientes/<%= expediente.id_expediente %>/servicio/<%= s.id_servicio %>/eliminar'
+                          )">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <div class="text-center py-5">
+            <i class="bi bi-briefcase" style="font-size: 3rem; color: #94a3b8;"></i>
+            <p class="text-muted mt-2">No hay servicios en este expediente</p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#agregarServicioModal">
+              <i class="bi bi-plus-lg me-1"></i>Agregar primer servicio
+            </button>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    
+    <!-- Resumen Financiero -->
+    <% if (servicios.length > 0) { %>
+    <div class="card mt-3">
+      <div class="card-body">
+        <div class="row justify-content-end">
+          <div class="col-md-5">
+            <table class="table table-sm mb-0">
+              <tr>
+                <td>Subtotal</td>
+                <td class="text-end">L. <%= subtotal.toFixed(2) %></td>
+              </tr>
+              <tr>
+                <td>IVA (15%)</td>
+                <td class="text-end">L. <%= iva.toFixed(2) %></td>
+              </tr>
+              <tr class="fw-bold table-light">
+                <td>Total</td>
+                <td class="text-end">L. <%= total.toFixed(2) %></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Modal Agregar Servicio -->
+<div class="modal fade" id="agregarServicioModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form action="/digitador/expedientes/<%= expediente.id_expediente %>/servicio" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Agregar Servicio al Expediente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Tipo de Servicio *</label>
+              <select name="id_tipo_servicio" id="modalTipoServicio" class="form-select" required>
+                <option value="">Seleccionar...</option>
+                <% tiposServicio.forEach(ts => { %>
+                  <option value="<%= ts.id_tipo_servicio %>"><%= ts.tipo_servicio %> - L. <%= parseFloat(ts.precio_actual).toFixed(2) %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Encuestador</label>
+              <select name="id_encuestador" id="modalEncuestador" class="form-select" disabled>
+                <option value="">Seleccione tipo de servicio primero...</option>
+              </select>
+              <small class="text-muted">Solo encuestadores compatibles con el tipo de servicio</small>
+            </div>
+            
+            <!-- Cascada Departamento -> Ciudad -->
+            <div class="col-md-6">
+              <label class="form-label">Departamento *</label>
+              <select id="modalDepartamento" class="form-select" required>
+                <option value="">Seleccionar departamento...</option>
+                <% departamentos.forEach(d => { %>
+                  <option value="<%= d.id_departamento %>"><%= d.departamento %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Ciudad *</label>
+              <select name="id_ciudad" id="modalCiudad" class="form-select" required disabled>
+                <option value="">Seleccione departamento primero...</option>
+              </select>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label">Fecha del Servicio *</label>
+              <input type="date" name="fecha_servicio" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+            </div>
+            
+            <!-- Campo Direccion del Servicio -->
+            <div class="col-12">
+              <label class="form-label">Direccion del Servicio</label>
+              <input type="text" name="direccion_servicio" id="modalDireccion" class="form-control"
+                     placeholder="Direccion donde se realizara el servicio">
+              <small class="text-muted" id="modalDireccionHint"></small>
+            </div>
+            
+            <!-- Campo Factura con Tom Select -->
+            <div class="col-md-6">
+              <label class="form-label">Factura</label>
+              <select name="id_factura" id="selectFactura" class="form-select">
+                <option value="">Sin factura</option>
+                <% facturas.forEach(f => { %>
+                  <option value="<%= f.id_factura %>">
+                    <%= f.numero_factura %> — <%= f.fecha_factura ? new Date(f.fecha_factura).toLocaleDateString('es-HN') : '' %> — L. <%= f.monto_total ? parseFloat(f.monto_total).toFixed(2) : 'N/A' %>
+                  </option>
+                <% }); %>
+              </select>
+              <small class="text-muted">Facturas de <%= expediente.empresa %></small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Agregar Servicio</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Servicio -->
+<div class="modal fade" id="editarServicioModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="editarServicioForm" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Servicio</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Tipo de Servicio *</label>
+              <select name="id_tipo_servicio" id="editTipoServicio" class="form-select" required>
+                <option value="">Seleccionar...</option>
+                <% tiposServicio.forEach(ts => { %>
+                  <option value="<%= ts.id_tipo_servicio %>"><%= ts.tipo_servicio %> - L. <%= parseFloat(ts.precio_actual).toFixed(2) %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Encuestador</label>
+              <select name="id_encuestador" id="editEncuestador" class="form-select">
+                <option value="">Sin asignar</option>
+              </select>
+              <small class="text-muted">Solo encuestadores compatibles con el tipo de servicio</small>
+            </div>
+            
+            <!-- Cascada Departamento -> Ciudad -->
+            <div class="col-md-6">
+              <label class="form-label">Departamento *</label>
+              <select id="editDepartamento" class="form-select" required>
+                <option value="">Seleccionar departamento...</option>
+                <% departamentos.forEach(d => { %>
+                  <option value="<%= d.id_departamento %>"><%= d.departamento %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Ciudad *</label>
+              <select name="id_ciudad" id="editCiudad" class="form-select" required>
+                <option value="">Seleccione departamento primero...</option>
+              </select>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label">Fecha del Servicio *</label>
+              <input type="date" name="fecha_servicio" id="editFecha" class="form-control" required>
+            </div>
+            
+            <!-- Campo Direccion del Servicio -->
+            <div class="col-12">
+              <label class="form-label">Direccion del Servicio</label>
+              <input type="text" name="direccion_servicio" id="editDireccion" class="form-control"
+                     placeholder="Direccion donde se realizara el servicio">
+              <small class="text-muted" id="editDireccionHint"></small>
+            </div>
+            
+            <!-- Campo Factura -->
+            <div class="col-md-6">
+              <label class="form-label">Factura</label>
+              <select name="id_factura" id="editFactura" class="form-select">
+                <option value="">Sin factura</option>
+                <% facturas.forEach(f => { %>
+                  <option value="<%= f.id_factura %>">
+                    <%= f.numero_factura %> — <%= f.fecha_factura ? new Date(f.fecha_factura).toLocaleDateString('es-HN') : '' %> — L. <%= f.monto_total ? parseFloat(f.monto_total).toFixed(2) : 'N/A' %>
+                  </option>
+                <% }); %>
+              </select>
+              <small class="text-muted">Facturas de <%= expediente.empresa %></small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // Tooltips
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+
+  // Tom Select: factura modal agregar
+  new TomSelect('#selectFactura', { placeholder: 'Buscar factura...', allowEmptyOption: true });
+
+  // Valores del servidor inyectados limpiamente
+  const CFG = {
+    idDeptoFM:    <%= idDeptoFM || 'null' %>,
+    idCiudadTGU:  <%= idCiudadTGU || 'null' %>,
+    idDepto:      <%= expediente.candidato_id_depto || 'null' %>,
+    idCiudad:     <%= expediente.candidato_id_ciudad || 'null' %>,
+    direccion:    `<%- (expediente.candidato_direccion || '').replace(/`/g, "'") %>`
+  };
+
+  // Helper: fetch ciudades y poblar select, opcionalmente pre-seleccionando una
+  function fetchCiudades(idDep, selectEl, preselect) {
+    if (!idDep) {
+      selectEl.innerHTML = '<option value="">Seleccione departamento primero...</option>';
+      selectEl.disabled = true;
+      return;
+    }
+    fetch('/digitador/api/ciudades?id_departamento=' + idDep)
+      .then(r => r.json())
+      .then(data => {
+        selectEl.innerHTML = '<option value="">Seleccionar ciudad...</option>' +
+          data.map(c => `<option value="${c.id_ciudad}"${c.id_ciudad == preselect ? ' selected' : ''}>${c.ciudad}</option>`).join('');
+        selectEl.disabled = false;
+      })
+      .catch(() => { selectEl.innerHTML = '<option value="">Error al cargar</option>'; });
+  }
+
+  // Cascada depto→ciudad modal AGREGAR
+  document.getElementById('modalDepartamento').addEventListener('change', function () {
+    fetchCiudades(this.value, document.getElementById('modalCiudad'), null);
+  });
+
+  // Cascada depto→ciudad modal EDITAR
+  document.getElementById('editDepartamento').addEventListener('change', function () {
+    fetchCiudades(this.value, document.getElementById('editCiudad'), null);
+  });
+
+  // Autocompletar ubicación según tipo
+  function autoUbicacion(texto, selDepto, selCiudad, inputDir, hint) {
+    const esCentral = texto.includes('poligraf') || texto.includes('psico');
+    const esSocio   = texto.includes('socioecon');
+    if (esCentral && CFG.idDeptoFM) {
+      selDepto.value = CFG.idDeptoFM;
+      fetchCiudades(CFG.idDeptoFM, selCiudad, CFG.idCiudadTGU);
+      inputDir.value = 'SECU, COLONIA ALAMEDA';
+      if (hint) { hint.textContent = 'Valor por defecto: oficina SECU. Puede modificarlo.'; hint.className = 'text-muted small'; }
+    } else if (esSocio && CFG.idDepto) {
+      selDepto.value = CFG.idDepto;
+      fetchCiudades(CFG.idDepto, selCiudad, CFG.idCiudad);
+      inputDir.value = CFG.direccion;
+      if (hint) { hint.textContent = 'Valor por defecto: domicilio del candidato. Puede modificarlo.'; hint.className = 'text-muted small'; }
+    }
+  }
+
+  // Helper: generar etiqueta de carga para encuestador
+  function formatCarga(carga) {
+    const c = parseInt(carga) || 0;
+    if (c === 0) return '<span class="text-success">Disponible</span>';
+    if (c === 1) return '<span class="text-success">' + c + ' activo</span>';
+    if (c >= 2 && c <= 3) return '<span class="text-warning">' + c + ' activos</span>';
+    return '<span class="text-danger">' + c + ' activos</span>';
+  }
+
+  // Tipo servicio → encuestadores + autoubicación (modal AGREGAR)
+  let tsEnc = null;
+  document.getElementById('modalTipoServicio').addEventListener('change', function () {
+    const idTipo = this.value;
+    const texto  = (this.options[this.selectedIndex]?.text || '').toLowerCase();
+    const selEnc = document.getElementById('modalEncuestador');
+    if (tsEnc) { tsEnc.destroy(); tsEnc = null; }
+    if (!idTipo) { selEnc.innerHTML = '<option value="">Seleccione tipo primero...</option>'; selEnc.disabled = true; return; }
+    fetch('/digitador/api/encuestadores-por-tipo?id_tipo_servicio=' + idTipo)
+      .then(r => r.json())
+      .then(data => {
+        selEnc.innerHTML = '<option value="">Sin asignar</option>' +
+          data.map(e => {
+            const carga = parseInt(e.servicios_activos) || 0;
+            const completadosMes = parseInt(e.completados_mes) || 0;
+            const labelActivos = carga === 0 ? 'Disponible' : carga <= 1 ? carga + ' activo' : carga + ' activos';
+            const labelCompletos = completadosMes + ' completado' + (completadosMes !== 1 ? 's' : '') + ' este mes';
+            return `<option value="${e.id_empleado}" data-carga="${carga}" data-completados="${completadosMes}">${e.nombre_completo} — ${labelActivos} | ${labelCompletos}</option>`;
+          }).join('');
+        selEnc.disabled = false;
+        tsEnc = new TomSelect('#modalEncuestador', {
+          placeholder: 'Buscar encuestador...',
+          allowEmptyOption: true,
+          render: {
+            option: function(data, escape) {
+              // Sin asignar: solo texto, sin badges de carga
+              if (!data.value) return `<div>${escape(data.text)}</div>`;
+              const carga = parseInt(data.$option?.dataset?.carga) || 0;
+              const completados = parseInt(data.$option?.dataset?.completados) || 0;
+              let colorClass = 'text-success';
+              if (carga >= 2 && carga <= 3) colorClass = 'text-warning';
+              if (carga >= 4) colorClass = 'text-danger';
+              const nombre = escape(data.text.split(' — ')[0]);
+              const labelActivos = carga === 0 ? 'Disponible' : carga + ' activo' + (carga !== 1 ? 's' : '');
+              const labelCompletos = completados + ' completado' + (completados !== 1 ? 's' : '') + ' (30d)';
+              return `<div class="d-flex justify-content-between align-items-center"><span>${nombre}</span><div class="text-end"><small class="${colorClass} d-block">${labelActivos}</small><small class="text-muted">${labelCompletos}</small></div></div>`;
+            }
+          }
+        });
+      });
+    autoUbicacion(texto,
+      document.getElementById('modalDepartamento'),
+      document.getElementById('modalCiudad'),
+      document.getElementById('modalDireccion'),
+      document.getElementById('modalDireccionHint'));
+  });
+
+  // Tom Select para editFactura (estático, se inicializa una vez)
+  let tsEditFac = new TomSelect('#editFactura', { placeholder: 'Buscar factura...', allowEmptyOption: true });
+
+  // Tipo servicio → encuestadores + autoubicación (modal EDITAR)
+  let tsEditEnc = null;
+  document.getElementById('editTipoServicio').addEventListener('change', function () {
+    const idTipo = this.value;
+    const texto  = (this.options[this.selectedIndex]?.text || '').toLowerCase();
+    const selEnc = document.getElementById('editEncuestador');
+    if (tsEditEnc) { tsEditEnc.destroy(); tsEditEnc = null; }
+    if (!idTipo) { selEnc.innerHTML = '<option value="">Seleccione tipo primero...</option>'; return; }
+    fetch('/digitador/api/encuestadores-por-tipo?id_tipo_servicio=' + idTipo)
+      .then(r => r.json())
+      .then(data => {
+        selEnc.innerHTML = '<option value="">Sin asignar</option>' +
+          data.map(e => {
+            const carga = parseInt(e.servicios_activos) || 0;
+            const completadosMes = parseInt(e.completados_mes) || 0;
+            const labelActivos = carga === 0 ? 'Disponible' : carga <= 1 ? carga + ' activo' : carga + ' activos';
+            const labelCompletos = completadosMes + ' completado' + (completadosMes !== 1 ? 's' : '') + ' este mes';
+            return `<option value="${e.id_empleado}" data-carga="${carga}" data-completados="${completadosMes}">${e.nombre_completo} — ${labelActivos} | ${labelCompletos}</option>`;
+          }).join('');
+        tsEditEnc = new TomSelect('#editEncuestador', {
+          placeholder: 'Buscar encuestador...',
+          allowEmptyOption: true,
+          render: {
+            option: function(data, escape) {
+              // Sin asignar: solo texto, sin badges de carga
+              if (!data.value) return `<div>${escape(data.text)}</div>`;
+              const carga = parseInt(data.$option?.dataset?.carga) || 0;
+              const completados = parseInt(data.$option?.dataset?.completados) || 0;
+              let colorClass = 'text-success';
+              if (carga >= 2 && carga <= 3) colorClass = 'text-warning';
+              if (carga >= 4) colorClass = 'text-danger';
+              const nombre = escape(data.text.split(' — ')[0]);
+              const labelActivos = carga === 0 ? 'Disponible' : carga + ' activo' + (carga !== 1 ? 's' : '');
+              const labelCompletos = completados + ' completado' + (completados !== 1 ? 's' : '') + ' (30d)';
+              return `<div class="d-flex justify-content-between align-items-center"><span>${nombre}</span><div class="text-end"><small class="${colorClass} d-block">${labelActivos}</small><small class="text-muted">${labelCompletos}</small></div></div>`;
+            }
+          }
+        });
+      });
+    autoUbicacion(texto,
+      document.getElementById('editDepartamento'),
+      document.getElementById('editCiudad'),
+      document.getElementById('editDireccion'),
+      document.getElementById('editDireccionHint'));
+  });
+
+  // Botones lápiz → abrir modal editar
+  document.querySelectorAll('.btn-editar-servicio').forEach(btn => {
+    btn.addEventListener('click', function () {
+      abrirModalEditar({
+        id_servicio:        this.dataset.servicioId,
+        id_expediente:      this.dataset.expedienteId,
+        id_tipo_servicio:   this.dataset.tipoServicio,
+        id_encuestador:     this.dataset.encuestador,
+        id_ciudad:          this.dataset.ciudad,
+        id_departamento:    this.dataset.departamento,
+        fecha_servicio:     this.dataset.fecha,
+        direccion_servicio: this.dataset.direccion,
+        id_factura:         this.dataset.factura
+      });
+    });
+  });
+
+  // Abrir modal editar pre-llenado
+  function abrirModalEditar(s) {
+    document.getElementById('editTipoServicio').value = s.id_tipo_servicio;
+    document.getElementById('editFecha').value        = (s.fecha_servicio || '').split('T')[0];
+    document.getElementById('editDireccion').value    = s.direccion_servicio || '';
+
+    // Actualizar Tom Select de factura
+    if (tsEditFac) { tsEditFac.setValue(s.id_factura || ''); }
+
+    document.getElementById('editarServicioForm').action =
+      '/digitador/expedientes/' + s.id_expediente + '/servicio/' + s.id_servicio + '/editar';
+
+    if (s.id_departamento) {
+      document.getElementById('editDepartamento').value = s.id_departamento;
+      fetchCiudades(s.id_departamento, document.getElementById('editCiudad'), s.id_ciudad);
+    }
+
+    // Cargar encuestadores y aplicar TomSelect con carga
+    const selEnc = document.getElementById('editEncuestador');
+    if (tsEditEnc) { tsEditEnc.destroy(); tsEditEnc = null; }
+    fetch('/digitador/api/encuestadores-por-tipo?id_tipo_servicio=' + s.id_tipo_servicio)
+      .then(r => r.json())
+      .then(data => {
+        selEnc.innerHTML =
+          '<option value="">Sin asignar</option>' +
+          data.map(e => {
+            const carga = parseInt(e.servicios_activos) || 0;
+            const completadosMes = parseInt(e.completados_mes) || 0;
+            const labelActivos = carga === 0 ? 'Disponible' : carga <= 1 ? carga + ' activo' : carga + ' activos';
+            const labelCompletos = completadosMes + ' completado' + (completadosMes !== 1 ? 's' : '') + ' este mes';
+            return `<option value="${e.id_empleado}" data-carga="${carga}" data-completados="${completadosMes}"${e.id_empleado == s.id_encuestador ? ' selected' : ''}>${e.nombre_completo} — ${labelActivos} | ${labelCompletos}</option>`;
+          }).join('');
+        tsEditEnc = new TomSelect('#editEncuestador', {
+          placeholder: 'Buscar encuestador...',
+          allowEmptyOption: true,
+          render: {
+            option: function(data, escape) {
+              // Sin asignar: solo texto, sin badges de carga
+              if (!data.value) return `<div>${escape(data.text)}</div>`;
+              const carga = parseInt(data.$option?.dataset?.carga) || 0;
+              const completados = parseInt(data.$option?.dataset?.completados) || 0;
+              let colorClass = 'text-success';
+              if (carga >= 2 && carga <= 3) colorClass = 'text-warning';
+              if (carga >= 4) colorClass = 'text-danger';
+              const nombre = escape(data.text.split(' — ')[0]);
+              const labelActivos = carga === 0 ? 'Disponible' : carga + ' activo' + (carga !== 1 ? 's' : '');
+              const labelCompletos = completados + ' completado' + (completados !== 1 ? 's' : '') + ' (30d)';
+              return `<div class="d-flex justify-content-between align-items-center"><span>${nombre}</span><div class="text-end"><small class="${colorClass} d-block">${labelActivos}</small><small class="text-muted">${labelCompletos}</small></div></div>`;
+            }
+          }
+        });
+      });
+
+    new bootstrap.Modal(document.getElementById('editarServicioModal')).show();
+  }
+
+});
+</script>
+
+<%- include('../../partials/digitador-footer') %>

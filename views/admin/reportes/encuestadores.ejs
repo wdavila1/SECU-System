@@ -1,0 +1,228 @@
+<%- include('../../partials/admin-header', { active: 'reportes' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Reporte de Productividad de Encuestadores</h1>
+    <p class="page-subtitle mb-0">Analisis de rendimiento y cumplimiento</p>
+  </div>
+  <a href="/admin/reportes" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<!-- Graficas Chart.js -->
+<div class="row g-4 mb-4">
+  <!-- Grafica Barras Horizontales: Top por Completados -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-bar-chart-horizontal me-2"></i>Top Encuestadores por Servicios Completados
+      </div>
+      <div class="card-body">
+        <canvas id="graficaCompletados" height="250"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Grafica Barras: Tasa de Cumplimiento -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-speedometer2 me-2"></i>Tasa de Cumplimiento por Encuestador
+      </div>
+      <div class="card-body">
+        <canvas id="graficaTasa" height="250"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Resumen General -->
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= encuestadores.length %></div>
+          <div class="label">Encuestadores Activos</div>
+        </div>
+        <div class="icon" style="background: #1e3a5f;">
+          <i class="bi bi-people"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= encuestadores.reduce((sum, e) => sum + parseInt(e.total_asignados || 0), 0) %></div>
+          <div class="label">Total Asignados</div>
+        </div>
+        <div class="icon" style="background: #3b82f6;">
+          <i class="bi bi-briefcase"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= encuestadores.reduce((sum, e) => sum + parseInt(e.total_completados || 0), 0) %></div>
+          <div class="label">Total Completados</div>
+        </div>
+        <div class="icon" style="background: #10b981;">
+          <i class="bi bi-check-circle"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= encuestadores.reduce((sum, e) => sum + parseInt(e.vencidos || 0), 0) %></div>
+          <div class="label">Servicios Vencidos</div>
+        </div>
+        <div class="icon" style="background: #ef4444;">
+          <i class="bi bi-exclamation-circle"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabla Comparativa -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-table me-2"></i>Tabla Comparativa de Encuestadores</span>
+    <button class="btn btn-sm btn-outline-success" onclick="window.print()">
+      <i class="bi bi-printer me-2"></i>Imprimir
+    </button>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Encuestador</th>
+            <th>Puestos</th>
+            <th class="text-center">Asignados</th>
+            <th class="text-center">Completados</th>
+            <th class="text-center">Prom. Dias</th>
+            <th class="text-center">Vencidos</th>
+            <th class="text-center">Cumplimiento</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (encuestadores.length > 0) { %>
+            <% encuestadores.forEach(enc => { 
+              let tasaColor = 'text-danger';
+              if (enc.tasa_cumplimiento >= 80) tasaColor = 'text-success';
+              else if (enc.tasa_cumplimiento >= 50) tasaColor = 'text-warning';
+            %>
+              <tr>
+                <td>
+                  <a href="/admin/encuestadores/<%= enc.id_empleado %>/detalle" class="text-decoration-none">
+                    <strong><%= enc.nombre %></strong>
+                  </a>
+                </td>
+                <td><small class="text-muted"><%= enc.puestos || 'Sin asignar' %></small></td>
+                <td class="text-center"><span class="badge bg-primary"><%= enc.total_asignados %></span></td>
+                <td class="text-center"><span class="badge bg-success"><%= enc.total_completados %></span></td>
+                <td class="text-center">
+                  <% if (enc.promedio_dias !== null) { %>
+                    <%= enc.promedio_dias %> dias
+                  <% } else { %>
+                    <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+                <td class="text-center">
+                  <% if (enc.vencidos > 0) { %>
+                    <span class="badge bg-danger"><%= enc.vencidos %></span>
+                  <% } else { %>
+                    <span class="badge bg-secondary">0</span>
+                  <% } %>
+                </td>
+                <td class="text-center">
+                  <strong class="<%= tasaColor %>"><%= enc.tasa_cumplimiento %>%</strong>
+                  <div class="progress" style="height: 4px; width: 80px; margin: 0 auto;">
+                    <div class="progress-bar 
+                      <% if (enc.tasa_cumplimiento >= 80) { %>bg-success
+                      <% } else if (enc.tasa_cumplimiento >= 50) { %>bg-warning
+                      <% } else { %>bg-danger<% } %>" 
+                      style="width: <%= enc.tasa_cumplimiento %>%"></div>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: #94a3b8;"></i>
+                <p class="text-muted mt-2">No hay encuestadores registrados</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const coloresAdmin = ['#1e3a5f', '#2563eb', '#3b82f6', '#93c5fd', '#60a5fa', '#1d4ed8', '#1e40af', '#3730a3', '#4f46e5', '#6366f1'];
+
+const topCompletadosData  = <%- JSON.stringify(topCompletados) %>;
+const tasaCumplimientoData = <%- JSON.stringify(tasaCumplimiento) %>;
+
+function sinDatos(canvasId) {
+  const el = document.getElementById(canvasId);
+  if (!el) return;
+  el.parentElement.innerHTML = '<div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted py-4"><i class="bi bi-people fs-1 opacity-25"></i><small class="mt-2">Sin datos para mostrar</small></div>';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Barras horizontales: Top Completados
+  if (topCompletadosData.length > 0) {
+    new Chart(document.getElementById('graficaCompletados'), {
+      type: 'bar',
+      data: {
+        labels: topCompletadosData.map(r => r.nombre),
+        datasets: [{ label: 'Servicios Completados', data: topCompletadosData.map(r => r.total_completados), backgroundColor: coloresAdmin.slice(0, topCompletadosData.length), borderRadius: 4 }]
+      },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+  } else { sinDatos('graficaCompletados'); }
+
+  // Barras: Tasa de Cumplimiento
+  if (tasaCumplimientoData.length > 0) {
+    new Chart(document.getElementById('graficaTasa'), {
+      type: 'bar',
+      data: {
+        labels: tasaCumplimientoData.map(r => r.nombre),
+        datasets: [{
+          label: 'Tasa de Cumplimiento (%)',
+          data: tasaCumplimientoData.map(r => r.tasa_cumplimiento),
+          backgroundColor: tasaCumplimientoData.map(r => r.tasa_cumplimiento >= 80 ? '#10b981' : r.tasa_cumplimiento >= 50 ? '#f59e0b' : '#ef4444'),
+          borderRadius: 4
+        }]
+      },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } } }
+    });
+  } else { sinDatos('graficaTasa'); }
+});
+</script>
+
+<style>
+@media print {
+  .btn, .sidebar, .top-header, nav { display: none !important; }
+  .main-wrapper { margin-left: 0 !important; }
+  .card { border: 1px solid #ddd !important; box-shadow: none !important; }
+}
+</style>
+
+<%- include('../../partials/admin-footer') %>

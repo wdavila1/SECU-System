@@ -1,0 +1,302 @@
+<%- include('../../partials/admin-header', { active: 'reportes' }) %>
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Reporte de Expedientes</h1>
+    <p class="page-subtitle mb-0">Analisis de expedientes y servicios agrupados</p>
+  </div>
+  <a href="/admin/reportes" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-funnel me-2"></i>Filtros del Reporte
+  </div>
+  <div class="card-body">
+    <form action="/admin/reportes/expedientes" method="GET" class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Fecha Inicio</label>
+        <input type="date" class="form-control" name="fecha_inicio" value="<%= filtros.fecha_inicio || '' %>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Fecha Fin</label>
+        <input type="date" class="form-control" name="fecha_fin" value="<%= filtros.fecha_fin || '' %>">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Estado</label>
+        <select class="form-select" name="estado">
+          <option value="">Todos</option>
+          <option value="En proceso" <%= filtros.estado === 'En proceso' ? 'selected' : '' %>>En proceso</option>
+          <option value="Finalizado" <%= filtros.estado === 'Finalizado' ? 'selected' : '' %>>Finalizado</option>
+          <option value="Cancelado" <%= filtros.estado === 'Cancelado' ? 'selected' : '' %>>Cancelado</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Empresa</label>
+        <select class="form-select" name="empresa" id="filtroEmpresaExpedientes">
+          <option value="">Todas</option>
+          <% empresas.forEach(e => { %>
+            <option value="<%= e.id_empresa %>" <%= filtros.empresa == e.id_empresa ? 'selected' : '' %>><%= e.empresa %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-search me-2"></i>Generar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Graficas Chart.js -->
+<div class="row g-4 mb-4">
+  <!-- Grafica Donut: Expedientes por Estado -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-pie-chart me-2"></i>Por Estado
+      </div>
+      <div class="card-body">
+        <canvas id="graficaEstado" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Grafica Barras Horizontales: Por Empresa Top 10 -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-bar-chart-horizontal me-2"></i>Top 10 Empresas
+      </div>
+      <div class="card-body">
+        <canvas id="graficaEmpresa" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Grafica Linea: Por Mes -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-graph-up me-2"></i>Ultimos 6 Meses
+      </div>
+      <div class="card-body">
+        <canvas id="graficaMes" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Resumen -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= expedientes.length %></div>
+          <div class="label">Total Expedientes</div>
+        </div>
+        <div class="icon" style="background: #1e3a5f;">
+          <i class="bi bi-folder2"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= expedientes.filter(e => e.estado === 'Finalizado').length %></div>
+          <div class="label">Finalizados</div>
+        </div>
+        <div class="icon" style="background: #10b981;">
+          <i class="bi bi-check-circle"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="value"><%= expedientes.reduce((sum, e) => sum + parseInt(e.num_servicios || 0), 0) %></div>
+          <div class="label">Total Servicios</div>
+        </div>
+        <div class="icon" style="background: #3b82f6;">
+          <i class="bi bi-briefcase"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabla de Resultados -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-table me-2"></i>Expedientes</span>
+    <button class="btn btn-sm btn-outline-success" onclick="window.print()">
+      <i class="bi bi-printer me-2"></i>Imprimir
+    </button>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Candidato</th>
+            <th>DNI</th>
+            <th>Empresa</th>
+            <th>Servicios</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (expedientes.length > 0) { %>
+            <% expedientes.forEach(exp => { 
+              let badgeClass = 'bg-secondary';
+              if (exp.estado === 'En proceso') badgeClass = 'bg-info';
+              if (exp.estado === 'Finalizado') badgeClass = 'bg-success';
+              if (exp.estado === 'Cancelado') badgeClass = 'bg-danger';
+            %>
+              <tr>
+                <td><strong>#<%= exp.id_expediente %></strong></td>
+                <td><%= exp.candidato_nombre %></td>
+                <td><%= exp.dni %></td>
+                <td><%= exp.empresa %></td>
+                <td><span class="badge bg-primary"><%= exp.num_servicios %></span></td>
+                <td><%= new Date(exp.fecha_expediente).toLocaleDateString('es-GT') %></td>
+                <td><span class="badge <%= badgeClass %>"><%= exp.estado %></span></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: #94a3b8;"></i>
+                <p class="text-muted mt-2">No se encontraron expedientes con los filtros aplicados</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Paleta Admin: azul oscuro
+const coloresAdmin = ['#1e3a5f', '#2563eb', '#3b82f6', '#93c5fd', '#60a5fa', '#1d4ed8', '#1e40af', '#3730a3'];
+const coloresEstado = {
+  'En proceso': '#3b82f6',
+  'Finalizado': '#10b981',
+  'Cancelado': '#ef4444'
+};
+
+// Grafica Donut: Por Estado
+<% if (porEstado.length > 0) { %>
+new Chart(document.getElementById('graficaEstado'), {
+  type: 'doughnut',
+  data: {
+    labels: [<%- porEstado.map(r => `'${r.estado}'`).join(',') %>],
+    datasets: [{
+      data: [<%= porEstado.map(r => r.total).join(',') %>],
+      backgroundColor: [<%- porEstado.map(r => `coloresEstado['${r.estado}'] || '#6b7280'`).join(',') %>],
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom' }
+    }
+  }
+});
+<% } %>
+
+// Grafica Barras Horizontales: Por Empresa
+<% if (porEmpresa.length > 0) { %>
+new Chart(document.getElementById('graficaEmpresa'), {
+  type: 'bar',
+  data: {
+    labels: [<%- porEmpresa.map(r => `'${r.empresa.substring(0, 15)}...'`).join(',') %>],
+    datasets: [{
+      label: 'Expedientes',
+      data: [<%= porEmpresa.map(r => r.total).join(',') %>],
+      backgroundColor: '#2563eb',
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      x: { beginAtZero: true, ticks: { stepSize: 1 } }
+    }
+  }
+});
+<% } %>
+
+// Grafica Linea: Por Mes
+<% if (porMes.length > 0) { %>
+new Chart(document.getElementById('graficaMes'), {
+  type: 'line',
+  data: {
+    labels: [<%- porMes.map(r => `'${r.mes_label}'`).join(',') %>],
+    datasets: [{
+      label: 'Expedientes',
+      data: [<%= porMes.map(r => r.total).join(',') %>],
+      borderColor: '#1e3a5f',
+      backgroundColor: 'rgba(30, 58, 95, 0.1)',
+      fill: true,
+      tension: 0.3
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    }
+  }
+});
+<% } %>
+</script>
+
+<style>
+@media print {
+  .btn, .sidebar, .top-header, .card-header form, nav {
+    display: none !important;
+  }
+  .main-wrapper {
+    margin-left: 0 !important;
+  }
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  new TomSelect('#filtroEmpresaExpedientes', { placeholder: 'Buscar empresa...', allowEmptyOption: true });
+});
+</script>
+<%- include('../../partials/admin-footer') %>

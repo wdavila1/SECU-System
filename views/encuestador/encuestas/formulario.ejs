@@ -1,0 +1,262 @@
+<%- include('../../partials/encuestador-header', { titulo: 'Realizar Encuesta', usuario: usuario, activePage: 'encuestas' }) %>
+
+<div class="max-w-4xl mx-auto">
+    <!-- Info del Candidato -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-bold text-gray-800"><%= candidato.nombre %> <%= candidato.apellido %></h2>
+                <p class="text-gray-500"><%= servicio.tipo_servicio %> - <%= servicio.empresa_nombre %></p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500">Progreso:</span>
+                <div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-emerald-500 transition-all duration-300" style="width: <%= progreso || 0 %>%"></div>
+                </div>
+                <span class="text-sm font-medium text-gray-700"><%= progreso || 0 %>%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegacion de Secciones -->
+    <div class="bg-white rounded-xl shadow-sm mb-6 overflow-x-auto">
+        <div class="flex p-2 gap-2 min-w-max">
+            <% secciones.forEach(function(seccion, index) { %>
+                <button type="button" 
+                    onclick="cambiarSeccion(<%= index %>)"
+                    class="seccion-tab px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                        <%= index === seccionActiva ? 'bg-emerald-600 text-white' : 'text-gray-600 hover:bg-gray-100' %>"
+                    data-index="<%= index %>">
+                    <%= seccion.nombre %>
+                    <% if (seccion.completada) { %>
+                        <svg class="inline w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    <% } %>
+                </button>
+            <% }); %>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <form id="encuestaForm" method="POST" action="/encuestador/encuesta/<%= servicio.id %>/guardar" enctype="multipart/form-data">
+        <input type="hidden" name="seccion_actual" id="seccionActual" value="<%= seccionActiva %>">
+        
+        <% secciones.forEach(function(seccion, seccionIndex) { %>
+            <div class="seccion-content bg-white rounded-xl shadow-sm p-6 mb-6 <%= seccionIndex !== seccionActiva ? 'hidden' : '' %>" data-seccion="<%= seccionIndex %>">
+                <h3 class="text-lg font-semibold text-gray-800 mb-6 pb-3 border-b"><%= seccion.nombre %></h3>
+                
+                <div class="space-y-6">
+                    <% seccion.campos.forEach(function(campo) { %>
+                        <div class="campo-grupo">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <%= campo.etiqueta %>
+                                <% if (campo.requerido) { %><span class="text-red-500">*</span><% } %>
+                            </label>
+                            
+                            <% if (campo.tipo === 'texto') { %>
+                                <input type="text" name="<%= campo.nombre %>" value="<%= campo.valor || '' %>"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    <%= campo.requerido ? 'required' : '' %>>
+                            
+                            <% } else if (campo.tipo === 'numero') { %>
+                                <input type="number" name="<%= campo.nombre %>" value="<%= campo.valor || '' %>"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    <%= campo.requerido ? 'required' : '' %>>
+                            
+                            <% } else if (campo.tipo === 'fecha') { %>
+                                <input type="date" name="<%= campo.nombre %>" value="<%= campo.valor || '' %>"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    <%= campo.requerido ? 'required' : '' %>>
+                            
+                            <% } else if (campo.tipo === 'textarea') { %>
+                                <textarea name="<%= campo.nombre %>" rows="4"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    <%= campo.requerido ? 'required' : '' %>><%= campo.valor || '' %></textarea>
+                            
+                            <% } else if (campo.tipo === 'select') { %>
+                                <select name="<%= campo.nombre %>"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    <%= campo.requerido ? 'required' : '' %>>
+                                    <option value="">Seleccione una opcion</option>
+                                    <% campo.opciones.forEach(function(opcion) { %>
+                                        <option value="<%= opcion.valor %>" <%= campo.valor === opcion.valor ? 'selected' : '' %>><%= opcion.texto %></option>
+                                    <% }); %>
+                                </select>
+                            
+                            <% } else if (campo.tipo === 'radio') { %>
+                                <div class="space-y-2">
+                                    <% campo.opciones.forEach(function(opcion) { %>
+                                        <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                            <input type="radio" name="<%= campo.nombre %>" value="<%= opcion.valor %>"
+                                                class="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                                                <%= campo.valor === opcion.valor ? 'checked' : '' %>
+                                                <%= campo.requerido ? 'required' : '' %>>
+                                            <span class="text-gray-700"><%= opcion.texto %></span>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                            
+                            <% } else if (campo.tipo === 'checkbox') { %>
+                                <div class="space-y-2">
+                                    <% campo.opciones.forEach(function(opcion) { %>
+                                        <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                            <input type="checkbox" name="<%= campo.nombre %>[]" value="<%= opcion.valor %>"
+                                                class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                                                <%= (campo.valor && campo.valor.includes(opcion.valor)) ? 'checked' : '' %>>
+                                            <span class="text-gray-700"><%= opcion.texto %></span>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                            
+                            <% } else if (campo.tipo === 'archivo') { %>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                    <input type="file" name="<%= campo.nombre %>" id="<%= campo.nombre %>" class="hidden"
+                                        accept="<%= campo.accept || '*/*' %>" <%= campo.requerido ? 'required' : '' %>>
+                                    <label for="<%= campo.nombre %>" class="cursor-pointer">
+                                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                        </svg>
+                                        <p class="text-gray-600">Haz clic para subir o arrastra el archivo</p>
+                                        <p class="text-sm text-gray-400 mt-1">PNG, JPG, PDF hasta 10MB</p>
+                                    </label>
+                                    <% if (campo.valor) { %>
+                                        <p class="mt-2 text-sm text-emerald-600">Archivo actual: <%= campo.valor %></p>
+                                    <% } %>
+                                </div>
+                            
+                            <% } else if (campo.tipo === 'firma') { %>
+                                <div class="border border-gray-300 rounded-lg p-4">
+                                    <canvas id="firma_<%= campo.nombre %>" class="w-full h-40 border border-gray-200 rounded bg-white cursor-crosshair"></canvas>
+                                    <input type="hidden" name="<%= campo.nombre %>" id="<%= campo.nombre %>_data">
+                                    <div class="flex justify-end mt-2">
+                                        <button type="button" onclick="limpiarFirma('<%= campo.nombre %>')" class="text-sm text-gray-500 hover:text-gray-700">
+                                            Limpiar firma
+                                        </button>
+                                    </div>
+                                </div>
+                            <% } %>
+                            
+                            <% if (campo.ayuda) { %>
+                                <p class="mt-1 text-sm text-gray-500"><%= campo.ayuda %></p>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        <% }); %>
+
+        <!-- Botones de Navegacion -->
+        <div class="flex flex-col sm:flex-row justify-between gap-4 mt-6">
+            <button type="button" id="btnAnterior" onclick="seccionAnterior()" 
+                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                Anterior
+            </button>
+            
+            <div class="flex gap-4">
+                <button type="submit" name="accion" value="guardar" 
+                    class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    Guardar Progreso
+                </button>
+                
+                <button type="button" id="btnSiguiente" onclick="seccionSiguiente()"
+                    class="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                    Siguiente
+                </button>
+                
+                <button type="submit" name="accion" value="finalizar" id="btnFinalizar"
+                    class="hidden px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    Finalizar Encuesta
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    let seccionActual = <%= seccionActiva %>;
+    const totalSecciones = <%= secciones.length %>;
+
+    function cambiarSeccion(index) {
+        document.querySelectorAll('.seccion-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.seccion-tab').forEach(el => {
+            el.classList.remove('bg-emerald-600', 'text-white');
+            el.classList.add('text-gray-600');
+        });
+        
+        document.querySelector(`[data-seccion="${index}"]`).classList.remove('hidden');
+        document.querySelector(`.seccion-tab[data-index="${index}"]`).classList.add('bg-emerald-600', 'text-white');
+        document.querySelector(`.seccion-tab[data-index="${index}"]`).classList.remove('text-gray-600');
+        
+        seccionActual = index;
+        document.getElementById('seccionActual').value = index;
+        actualizarBotones();
+    }
+
+    function seccionAnterior() {
+        if (seccionActual > 0) {
+            cambiarSeccion(seccionActual - 1);
+        }
+    }
+
+    function seccionSiguiente() {
+        if (seccionActual < totalSecciones - 1) {
+            cambiarSeccion(seccionActual + 1);
+        }
+    }
+
+    function actualizarBotones() {
+        document.getElementById('btnAnterior').disabled = seccionActual === 0;
+        
+        if (seccionActual === totalSecciones - 1) {
+            document.getElementById('btnSiguiente').classList.add('hidden');
+            document.getElementById('btnFinalizar').classList.remove('hidden');
+        } else {
+            document.getElementById('btnSiguiente').classList.remove('hidden');
+            document.getElementById('btnFinalizar').classList.add('hidden');
+        }
+    }
+
+    // Inicializar firma si existe
+    function initFirma(nombre) {
+        const canvas = document.getElementById(`firma_${nombre}`);
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        let dibujando = false;
+        
+        canvas.addEventListener('mousedown', () => dibujando = true);
+        canvas.addEventListener('mouseup', () => {
+            dibujando = false;
+            ctx.beginPath();
+            document.getElementById(`${nombre}_data`).value = canvas.toDataURL();
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if (!dibujando) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000';
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        });
+    }
+
+    function limpiarFirma(nombre) {
+        const canvas = document.getElementById(`firma_${nombre}`);
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById(`${nombre}_data`).value = '';
+    }
+
+    // Inicializar
+    actualizarBotones();
+    document.querySelectorAll('canvas[id^="firma_"]').forEach(canvas => {
+        const nombre = canvas.id.replace('firma_', '');
+        initFirma(nombre);
+    });
+</script>
+
+<%- include('../../partials/encuestador-footer') %>

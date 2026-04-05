@@ -1,0 +1,76 @@
+<%- include('../../partials/admin-header', { active: 'reportes' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Reportes del Sistema</h1>
+    <p class="page-subtitle mb-0">Genera reportes personalizados con graficas y analisis</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Reporte de Servicios -->
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <div class="mb-3" style="width: 70px; height: 70px; background: #1e3a5f20; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+          <i class="bi bi-briefcase" style="font-size: 2rem; color: #1e3a5f;"></i>
+        </div>
+        <h5 class="card-title">Servicios</h5>
+        <p class="text-muted small">Reporte detallado de servicios con graficas por tipo y estado.</p>
+        <a href="/admin/reportes/servicios" class="btn btn-primary">
+          <i class="bi bi-file-earmark-bar-graph me-2"></i>Generar
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Reporte de Expedientes -->
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <div class="mb-3" style="width: 70px; height: 70px; background: #2563eb20; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+          <i class="bi bi-folder2" style="font-size: 2rem; color: #2563eb;"></i>
+        </div>
+        <h5 class="card-title">Expedientes</h5>
+        <p class="text-muted small">Analisis de expedientes por estado, empresa y tendencia mensual.</p>
+        <a href="/admin/reportes/expedientes" class="btn btn-primary">
+          <i class="bi bi-file-earmark-bar-graph me-2"></i>Generar
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Reporte de Cotizaciones -->
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <div class="mb-3" style="width: 70px; height: 70px; background: #10b98120; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+          <i class="bi bi-file-earmark-text" style="font-size: 2rem; color: #10b981;"></i>
+        </div>
+        <h5 class="card-title">Cotizaciones</h5>
+        <p class="text-muted small">Montos cotizados, tasa de conversion y analisis por empresa.</p>
+        <a href="/admin/reportes/cotizaciones" class="btn btn-primary">
+          <i class="bi bi-file-earmark-bar-graph me-2"></i>Generar
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Reporte de Encuestadores -->
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <div class="mb-3" style="width: 70px; height: 70px; background: #f59e0b20; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+          <i class="bi bi-people" style="font-size: 2rem; color: #f59e0b;"></i>
+        </div>
+        <h5 class="card-title">Encuestadores</h5>
+        <p class="text-muted small">Productividad, tasa de cumplimiento y comparativa de rendimiento.</p>
+        <a href="/admin/reportes/encuestadores" class="btn btn-primary">
+          <i class="bi bi-file-earmark-bar-graph me-2"></i>Generar
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/admin-footer') %>

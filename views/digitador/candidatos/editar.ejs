@@ -1,0 +1,134 @@
+<%- include('../../partials/digitador-header', { active: 'candidatos' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Editar Candidato</h1>
+    <p class="page-subtitle mb-0">Modificando: <%= candidato.p_nombre %> <%= candidato.p_apellido %></p>
+  </div>
+  <a href="/digitador/candidatos" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<form action="/digitador/candidatos/editar/<%= candidato.id_candidato %>" method="POST">
+  <div class="card">
+    <div class="card-header">
+      <i class="bi bi-person me-2"></i>Datos del Candidato
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label">Primer Nombre *</label>
+          <input type="text" class="form-control" name="p_nombre" value="<%= candidato.p_nombre %>" required>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label">Segundo Nombre</label>
+          <input type="text" class="form-control" name="s_nombre" value="<%= candidato.s_nombre || '' %>">
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label">Primer Apellido *</label>
+          <input type="text" class="form-control" name="p_apellido" value="<%= candidato.p_apellido %>" required>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label">Segundo Apellido</label>
+          <input type="text" class="form-control" name="s_apellido" value="<%= candidato.s_apellido || '' %>">
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <label class="form-label">DNI</label>
+          <input type="text" class="form-control" value="<%= candidato.dni %>" disabled>
+          <small class="text-muted">El DNI no puede ser modificado</small>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <label class="form-label">Genero</label>
+          <select class="form-select" name="genero">
+            <option value="">Seleccionar...</option>
+            <option value="Masculino" <%= candidato.genero === 'Masculino' ? 'selected' : '' %>>Masculino</option>
+            <option value="Femenino" <%= candidato.genero === 'Femenino' ? 'selected' : '' %>>Femenino</option>
+            <option value="Otro" <%= candidato.genero === 'Otro' ? 'selected' : '' %>>Otro</option>
+          </select>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <label class="form-label">Fecha de Nacimiento *</label>
+          <input type="date" class="form-control" name="fecha_nacimiento" value="<%= candidato.fecha_nacimiento ? new Date(candidato.fecha_nacimiento).toISOString().split('T')[0] : '' %>" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Correo Electronico *</label>
+          <input type="email" class="form-control" name="correo" value="<%= candidato.correo %>" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Telefono *</label>
+          <input type="text" class="form-control" name="telefono" value="<%= candidato.telefono %>" 
+          placeholder="Ej: 99887766 (sin guiones)" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Departamento *</label>
+          <select class="form-select" id="selectDepartamento" required>
+            <option value="">Seleccionar departamento...</option>
+            <% 
+              // Encontrar el departamento del candidato
+              let depActual = null;
+              ciudades.forEach(c => {
+                if (c.id_ciudad == candidato.id_ciudad) {
+                  depActual = c.id_departamento;
+                }
+              });
+            %>
+            <% departamentos.forEach(d => { %>
+              <option value="<%= d.id_departamento %>" <%= depActual == d.id_departamento ? 'selected' : '' %>><%= d.departamento %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Ciudad *</label>
+          <select class="form-select" name="id_ciudad" id="selectCiudad" required>
+            <option value="">Seleccionar ciudad...</option>
+            <% ciudades.forEach(c => { %>
+              <% if (depActual && c.id_departamento == depActual) { %>
+                <option value="<%= c.id_ciudad %>" <%= candidato.id_ciudad == c.id_ciudad ? 'selected' : '' %>><%= c.ciudad %></option>
+              <% } %>
+            <% }); %>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Direccion *</label>
+          <textarea class="form-control" name="direccion" rows="2" required><%= candidato.direccion %></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+    </button>
+    <a href="/digitador/candidatos" class="btn btn-outline-secondary ms-2">Cancelar</a>
+  </div>
+</form>
+
+<script>
+// Cascada Departamento -> Ciudad
+document.getElementById('selectDepartamento').addEventListener('change', function() {
+  const idDep = this.value;
+  const selectCiudad = document.getElementById('selectCiudad');
+  
+  if (!idDep) {
+    selectCiudad.innerHTML = '<option value="">Seleccione departamento primero...</option>';
+    selectCiudad.disabled = true;
+    return;
+  }
+  
+  fetch('/admin/api/ciudades?id_departamento=' + idDep)
+    .then(r => r.json())
+    .then(data => {
+      selectCiudad.innerHTML = '<option value="">Seleccionar ciudad...</option>' +
+        data.map(c => `<option value="${c.id_ciudad}">${c.ciudad}</option>`).join('');
+      selectCiudad.disabled = false;
+    })
+    .catch(err => {
+      console.error('Error cargando ciudades:', err);
+      selectCiudad.innerHTML = '<option value="">Error al cargar</option>';
+    });
+});
+</script>
+
+<%- include('../../partials/digitador-footer') %>

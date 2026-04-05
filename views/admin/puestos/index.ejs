@@ -1,0 +1,206 @@
+<%- include('../../partials/admin-header', { active: 'puestos' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Puestos de Trabajo</h1>
+    <p class="page-subtitle mb-0">Administra los puestos de trabajo del sistema</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoPuestoModal">
+    <i class="bi bi-plus-lg me-2"></i>Nuevo Puesto
+  </button>
+</div>
+
+<!-- Card con estadistica -->
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card bg-primary text-white">
+      <div class="card-body d-flex align-items-center">
+        <i class="bi bi-person-badge fs-1 me-3"></i>
+        <div>
+          <h3 class="mb-0"><%= puestos.length %></h3>
+          <small>Puestos registrados</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Buscador -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      
+      <div class="col">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" id="buscarPuesto" placeholder="Buscar puesto...">
+        </div>
+      </div>
+
+      <div class="col-auto d-flex gap-2">
+        
+        <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center" 
+                style="min-width: 160px; height: 38px;" onclick="filtrarPuestos()">
+          <i class="bi bi-search me-2"></i> Filtrar
+        </button>
+
+        <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+                style="width: 38px; height: 38px; min-width: 38px; padding: 0;" 
+                title="Limpiar filtros" onclick="limpiarFiltro()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Lista de Puestos -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle" id="tablaPuestos">
+        <thead>
+          <tr>
+            <th style="width:70%">Puesto de Trabajo</th>
+            <th style="width:30%" class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (puestos.length > 0) { %>
+            <% puestos.forEach(puesto => { %>
+              <tr>
+                <td>
+                  <i class="bi bi-person-badge text-primary me-2"></i>
+                  <strong><%= puesto.puesto %></strong>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#editarModal<%= puesto.id_puesto %>">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                  </button>
+                  <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#eliminarModal<%= puesto.id_puesto %>">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              
+              <!-- Modal Editar -->
+              <div class="modal fade" id="editarModal<%= puesto.id_puesto %>" tabindex="-1">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <form action="/admin/puestos/editar/<%= puesto.id_puesto %>" method="POST">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Editar Puesto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label">Nombre del Puesto *</label>
+                          <input type="text" class="form-control" name="puesto" value="<%= puesto.puesto %>" required>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Modal Eliminar -->
+              <div class="modal fade" id="eliminarModal<%= puesto.id_puesto %>" tabindex="-1">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <form action="/admin/puestos/eliminar/<%= puesto.id_puesto %>" method="POST">
+                      <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Eliminar Puesto</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <p>Esta seguro que desea eliminar el puesto <strong><%= puesto.puesto %></strong>?</p>
+                        <div class="alert alert-warning">
+                          <i class="bi bi-info-circle me-2"></i>No se podra eliminar si hay empleados asignados a este puesto.
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="2" class="text-center py-5">
+                <i class="bi bi-person-badge" style="font-size: 3rem; color: #94a3b8;"></i>
+                <p class="text-muted mt-2">No hay puestos registrados</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nuevo Puesto -->
+<div class="modal fade" id="nuevoPuestoModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/admin/puestos" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Nuevo Puesto de Trabajo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre del Puesto *</label>
+            <input type="text" class="form-control" name="puesto" placeholder="Ej: Administrador, Poligrafista..." required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+// Filtra solo cuando se llama a la función (desde el botón o Enter)
+function filtrarPuestos() {
+  const filtro = document.getElementById('buscarPuesto').value.toLowerCase().trim();
+  const filas = document.querySelectorAll('#tablaPuestos tbody tr');
+  let resultados = false;
+
+  filas.forEach(fila => {
+    // Solo filtramos si la fila no es el mensaje de "No hay resultados"
+    if (!fila.classList.contains('no-results-row')) {
+      const texto = fila.textContent.toLowerCase();
+      const coincide = texto.includes(filtro);
+      fila.style.display = coincide ? '' : 'none';
+      if (coincide) resultados = true;
+    }
+  });
+}
+
+// Permitir que funcione al presionar "Enter" en el teclado
+document.getElementById('buscarPuesto').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    filtrarPuestos();
+  }
+});
+
+function limpiarFiltro() {
+  document.getElementById('buscarPuesto').value = '';
+  const filas = document.querySelectorAll('#tablaPuestos tbody tr');
+  filas.forEach(fila => {
+    fila.style.display = '';
+  });
+}
+</script>
+
+<%- include('../../partials/admin-footer') %>

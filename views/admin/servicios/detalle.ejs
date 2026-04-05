@@ -1,0 +1,204 @@
+<%- include('../../partials/admin-header', { active: 'servicios' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="page-title">Detalle del Servicio #<%= servicio.id_servicio %></h1>
+    <p class="page-subtitle mb-0"><%= servicio.tipo_servicio %> - <%= servicio.empresa %></p>
+  </div>
+  <a href="/admin/servicios" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Información del Servicio -->
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-info-circle me-2"></i>Informacion del Servicio</span>
+        <% 
+          let badgeClass = 'bg-secondary';
+          if (servicio.estado_servicio === 'Pendiente') badgeClass = 'bg-warning';
+          if (servicio.estado_servicio === 'En proceso') badgeClass = 'bg-info';
+          if (servicio.estado_servicio === 'Finalizado') badgeClass = 'bg-success';
+          if (servicio.estado_servicio === 'Cancelado') badgeClass = 'bg-danger';
+        %>
+        <span class="badge <%= badgeClass %> fs-6"><%= servicio.estado_servicio %></span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="text-muted small">Tipo de Servicio</label>
+            <p class="fw-semibold mb-0"><%= servicio.tipo_servicio %></p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Precio</label>
+            <p class="fw-semibold mb-0">L. <%= parseFloat(servicio.precio_actual).toFixed(2) %></p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Empresa</label>
+            <p class="fw-semibold mb-0"><%= servicio.empresa %></p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Fecha del Servicio</label>
+            <p class="fw-semibold mb-0"><%= new Date(servicio.fecha_servicio).toLocaleDateString('es-GT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Ubicacion</label>
+            <p class="fw-semibold mb-0"><%= servicio.ciudad %>, <%= servicio.departamento %></p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Encuestador Asignado</label>
+            <p class="fw-semibold mb-0">
+              <% if (servicio.encuestador_nombre !== 'Sin asignar') { %>
+                <i class="bi bi-person-check text-success me-1"></i><%= servicio.encuestador_nombre %>
+              <% } else { %>
+                <span class="text-muted"><i class="bi bi-person-x me-1"></i>Sin asignar</span>
+              <% } %>
+            </p>
+          </div>
+          <% if (servicio.numero_factura) { %>
+          <div class="col-md-6">
+            <label class="text-muted small">Factura</label>
+            <p class="fw-semibold mb-0"><%= servicio.numero_factura %> - <span class="badge bg-<%= servicio.status_factura === 'Pagada' ? 'success' : servicio.status_factura === 'Pendiente' ? 'warning' : 'danger' %>"><%= servicio.status_factura %></span></p>
+          </div>
+          <% } %>
+          <% if (servicio.codigo_cotizacion) { %>
+          <div class="col-md-6">
+            <label class="text-muted small">Cotizacion</label>
+            <p class="fw-semibold mb-0"><%= servicio.codigo_cotizacion %> - <span class="badge bg-<%= servicio.estado_cotizacion === 'Aceptada' ? 'success' : servicio.estado_cotizacion === 'Pendiente' ? 'warning' : 'danger' %>"><%= servicio.estado_cotizacion %></span></p>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Información del Candidato -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-person me-2"></i>Informacion del Candidato
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="text-muted small">Nombre Completo</label>
+            <p class="fw-semibold mb-0"><%= servicio.p_nombre %> <%= servicio.s_nombre || '' %> <%= servicio.p_apellido %> <%= servicio.s_apellido || '' %></p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">DNI</label>
+            <p class="fw-semibold mb-0"><%= servicio.dni %></p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Correo Electronico</label>
+            <p class="fw-semibold mb-0"><%= servicio.correo %></p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Telefono</label>
+            <p class="fw-semibold mb-0"><%= servicio.telefono %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Estado de Formularios -->
+  <div class="col-lg-4">
+    <% 
+      const tipoLower = servicio.tipo_servicio.toLowerCase();
+      const esPoligrafia = tipoLower.includes('poligraf');
+      const esPsicometrico = tipoLower.includes('psico');
+      const esSocioeconomico = tipoLower.includes('socio') || tipoLower.includes('investigacion');
+      const mostrarTodos = !esPoligrafia && !esPsicometrico && !esSocioeconomico;
+    %>
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-clipboard-check me-2"></i>Estado de Formularios
+      </div>
+      <div class="card-body">
+        <% if (esPoligrafia || mostrarTodos) { %>
+        <!-- Poligrafía -->
+        <div class="d-flex justify-content-between align-items-center p-3 rounded mb-3" style="background: #f8fafc;">
+          <div>
+            <i class="bi bi-question-circle text-primary me-2"></i>
+            <strong>Poligrafia</strong>
+          </div>
+          <% if (poligrafia) { %>
+            <span class="badge bg-<%= poligrafia.estado_formulario === 'Finalizado' ? 'success' : 'warning' %>">
+              <%= poligrafia.estado_formulario %>
+            </span>
+          <% } else { %>
+            <span class="badge bg-secondary">No iniciado</span>
+          <% } %>
+        </div>
+        <% } %>
+        
+        <% if (esSocioeconomico || mostrarTodos) { %>
+        <!-- Socioeconómico -->
+        <div class="d-flex justify-content-between align-items-center p-3 rounded mb-3" style="background: #f8fafc;">
+          <div>
+            <i class="bi bi-house text-success me-2"></i>
+            <strong>Socioeconomico</strong>
+          </div>
+          <% if (socioeconomico) { %>
+            <span class="badge bg-<%= socioeconomico.estado_formulario === 'Finalizado' ? 'success' : 'warning' %>">
+              <%= socioeconomico.estado_formulario %>
+            </span>
+          <% } else { %>
+            <span class="badge bg-secondary">No iniciado</span>
+          <% } %>
+        </div>
+        <% } %>
+        
+        <% if (esPsicometrico || mostrarTodos) { %>
+        <!-- Psicométrico -->
+        <div class="d-flex justify-content-between align-items-center p-3 rounded mb-3" style="background: #f8fafc;">
+          <div>
+            <i class="bi bi-brain text-purple me-2"></i>
+            <strong>Psicometrico</strong>
+          </div>
+          <% if (psicometrico) { %>
+            <span class="badge bg-<%= psicometrico.estado_formulario === 'Finalizado' ? 'success' : 'warning' %>">
+              <%= psicometrico.estado_formulario %>
+            </span>
+          <% } else { %>
+            <span class="badge bg-secondary">No iniciado</span>
+          <% } %>
+        </div>
+        <% } %>
+        
+        <!-- Botón Ver Formulario -->
+        <a href="/admin/servicios/<%= servicio.id_servicio %>/formularios" class="btn btn-primary w-100 mt-2">
+          <i class="bi bi-clipboard-data me-2"></i>Ver Formulario Completo
+        </a>
+      </div>
+    </div>
+    
+    <% if (poligrafia && poligrafia.estado_formulario === 'Finalizado') { %>
+    <div class="card mt-4">
+      <div class="card-header">
+        <i class="bi bi-clipboard-data me-2"></i>Resultado Poligrafia
+      </div>
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <% 
+            let resultColor = 'secondary';
+            if (poligrafia.resultado === 'Verdad') resultColor = 'success';
+            if (poligrafia.resultado === 'Engaño') resultColor = 'danger';
+            if (poligrafia.resultado === 'Inconcluso') resultColor = 'warning';
+          %>
+          <span class="badge bg-<%= resultColor %> fs-5 px-4 py-2"><%= poligrafia.resultado %></span>
+        </div>
+        <div class="text-muted">
+          Nivel de veracidad: <strong><%= poligrafia.nivel_veracidad_general %>/10</strong>
+        </div>
+        <% if (poligrafia.comentarios) { %>
+          <hr>
+          <p class="text-muted small mb-0"><%= poligrafia.comentarios %></p>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../../partials/admin-footer') %>

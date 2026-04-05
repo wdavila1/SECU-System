@@ -1,0 +1,558 @@
+<%- include('../../partials/encuestador-header') %>
+
+<% const active = 'servicios'; %>
+
+<div class="mb-4">
+    <a href="/encuestador/servicios/<%= servicio.id_servicio %>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Volver al Servicio
+    </a>
+</div>
+
+<div class="page-title">Formulario Socioeconomico</div>
+<p class="page-subtitle">
+    Candidato: <strong><%= servicio.p_nombre %> <%= servicio.p_apellido %></strong> | 
+    DNI: <%= servicio.dni %>
+</p>
+
+<!-- Informacion del servicio -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-6 col-md-3">
+                <small class="text-muted">Empresa</small>
+                <div class="fw-bold"><%= servicio.empresa %></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <small class="text-muted">Tipo de Servicio</small>
+                <div class="fw-bold"><%= servicio.tipo_servicio %></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <small class="text-muted">Estado Formulario</small>
+                <div>
+                    <span class="badge <%= formulario.estado_formulario === 'Finalizado' ? 'bg-success' : 'bg-warning text-dark' %>">
+                        <%= formulario.estado_formulario %>
+                    </span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <small class="text-muted">Ultima Actualizacion</small>
+                <div class="fw-bold" id="ultimaActualizacion">
+                    <%= new Date(formulario.fecha_ultima_actualizacion).toLocaleString('es-HN') %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% if (formulario.estado_formulario === 'Finalizado') { %>
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Este formulario ya fue finalizado y no puede ser modificado.
+    </div>
+<% } %>
+
+<form id="formSocioeconomico" method="POST" action="/encuestador/formularios/socioeconomico/<%= servicio.id_servicio %>">
+    <input type="hidden" name="tiempo_llenado_segundos" id="tiempoLlenado" value="<%= formulario.tiempo_llenado_segundos || 0 %>">
+    
+    <!-- Seccion 1: Datos de la Visita -->
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Datos de la Visita</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Fecha de Visita <span class="text-danger">*</span></label>
+                    <input type="date" name="fecha_visita" class="form-control" required
+                           value="<%= formulario.fecha_visita ? new Date(formulario.fecha_visita).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seccion 2: Informacion del Hogar -->
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-house me-2"></i>Informacion del Hogar</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Personas en Casa <span class="text-danger">*</span></label>
+                    <input type="number" name="personas_en_casa" class="form-control" required min="1"
+                           value="<%= formulario.personas_en_casa || 1 %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Personas que Aportan Ingreso <span class="text-danger">*</span></label>
+                    <input type="number" name="personas_aportan_ingreso" class="form-control" required min="0"
+                           value="<%= formulario.personas_aportan_ingreso || 0 %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tipo de Vivienda</label>
+                    <select name="tipo_vivienda" class="form-select"
+                            <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                        <option value="">Seleccione</option>
+                        <option value="Propia" <%= formulario.tipo_vivienda === 'Propia' ? 'selected' : '' %>>Propia</option>
+                        <option value="Alquilada" <%= formulario.tipo_vivienda === 'Alquilada' ? 'selected' : '' %>>Alquilada</option>
+                        <option value="Familiar" <%= formulario.tipo_vivienda === 'Familiar' ? 'selected' : '' %>>Familiar</option>
+                        <option value="Hipotecada" <%= formulario.tipo_vivienda === 'Hipotecada' ? 'selected' : '' %>>Hipotecada</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seccion 3: Informacion Financiera -->
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Informacion Financiera</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Ingreso Mensual Personal (L.) <span class="text-danger">*</span></label>
+                    <input type="number" name="ingreso_mensual_personal" class="form-control" required min="0" step="0.01"
+                           value="<%= formulario.ingreso_mensual_personal || 0 %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Ingreso Mensual del Hogar (L.) <span class="text-danger">*</span></label>
+                    <input type="number" name="ingreso_mensual_hogar" class="form-control" required min="0" step="0.01"
+                           value="<%= formulario.ingreso_mensual_hogar || 0 %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Gastos Mensuales Aproximados (L.)</label>
+                    <input type="number" name="gastos_mensuales_aproximados" class="form-control" min="0" step="0.01"
+                           value="<%= formulario.gastos_mensuales_aproximados || '' %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Deudas Actuales (L.)</label>
+                    <input type="number" name="deudas_actuales" class="form-control" min="0" step="0.01"
+                           value="<%= formulario.deudas_actuales || '' %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seccion 4: Informacion Laboral -->
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-briefcase me-2"></i>Informacion Laboral Actual</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Trabaja Actualmente <span class="text-danger">*</span></label>
+                    <select name="trabaja_actualmente" class="form-select" id="trabajaActualmente" required
+                            <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                        <option value="true" <%= formulario.trabaja_actualmente === true ? 'selected' : '' %>>Si</option>
+                        <option value="false" <%= formulario.trabaja_actualmente === false ? 'selected' : '' %>>No</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Empresa Actual</label>
+                    <input type="text" name="empresa_actual" id="campoEmpresaActual" class="form-control"
+                           value="<%= formulario.empresa_actual || '' %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tiempo Trabajando (meses)</label>
+                    <input type="number" name="tiempo_trabajando_meses" id="campoTiempoTrabajando" class="form-control" min="0"
+                           value="<%= formulario.tiempo_trabajando_meses || '' %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seccion 5: Informacion del Conyuge -->
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-people me-2"></i>Informacion del Conyuge</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Estado Civil</label>
+                    <select name="estado_civil" id="estadoCivil" class="form-select"
+                            <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                        <option value="">Seleccione</option>
+                        <option value="Soltero" <%= formulario.estado_civil === 'Soltero' ? 'selected' : '' %>>Soltero(a)</option>
+                        <option value="Casado" <%= formulario.estado_civil === 'Casado' ? 'selected' : '' %>>Casado(a)</option>
+                        <option value="Union libre" <%= formulario.estado_civil === 'Union libre' ? 'selected' : '' %>>Union Libre</option>
+                        <option value="Divorciado" <%= formulario.estado_civil === 'Divorciado' ? 'selected' : '' %>>Divorciado(a)</option>
+                        <option value="Viudo" <%= formulario.estado_civil === 'Viudo' ? 'selected' : '' %>>Viudo(a)</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Nombre del Conyuge</label>
+                    <input type="text" name="nombre_conyugue" id="campoNombreConyugue" class="form-control"
+                           value="<%= formulario.nombre_conyugue || '' %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Telefono del Conyuge</label>
+                    <input type="tel" name="telefono_conyugue" id="campoTelefonoConyugue" class="form-control"
+                           value="<%= formulario.telefono_conyugue || '' %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Lugar de Trabajo del Conyuge</label>
+                    <input type="text" name="lugar_trabajo_conyugue" id="campoLugarTrabajoConyugue" class="form-control"
+                           value="<%= formulario.lugar_trabajo_conyugue || '' %>"
+                           <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seccion 6: Comentarios -->
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-chat-text me-2"></i>Comentarios y Observaciones</h6>
+        </div>
+        <div class="card-body">
+            <textarea name="comentarios" class="form-control" rows="4" 
+                      placeholder="Ingrese comentarios adicionales sobre la visita socioeconomica..."
+                      <%= formulario.estado_formulario === 'Finalizado' ? 'disabled' : '' %>><%= formulario.comentarios || '' %></textarea>
+        </div>
+    </div>
+
+    <!-- Seccion 7: Documentos -->
+    <div class="card mb-3">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-file-earmark-arrow-up me-2"></i>Documentos Adjuntos</h6>
+        </div>
+        <div class="card-body">
+
+            <%# Documentos ya guardados en BD (de sesiones anteriores) %>
+            <% if (documentos && documentos.length > 0) { %>
+                <div class="mb-3">
+                    <p class="text-muted small fw-semibold mb-2">Ya subidos:</p>
+                    <ul class="list-group list-group-flush">
+                        <% documentos.forEach(function(doc) { %>
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <span class="badge bg-secondary me-2"><%= doc.tipo_documento %></span>
+                                    <%= doc.nombre_archivo %>
+                                </div>
+                                <a href="<%= doc.url_documento %>" target="_blank"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </li>
+                        <% }); %>
+                    </ul>
+                </div>
+            <% } %>
+
+            <% if (formulario.estado_formulario !== 'Finalizado') { %>
+                <%# Lista local (pendientes de subir al finalizar) %>
+                <div id="listaDocsPendientes" class="mb-3" style="display:none;">
+                    <p class="text-muted small fw-semibold mb-2">Pendientes de subir al finalizar:</p>
+                    <ul class="list-group list-group-flush" id="ulDocsPendientes"></ul>
+                </div>
+
+                <%# Formulario de agregar documento %>
+                <div class="border rounded p-3 bg-light">
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Agregue los documentos que necesite. Se subirán cuando presione
+                        <strong>Finalizar Evaluación</strong>.
+                    </p>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tipo de Documento</label>
+                            <select class="form-select" id="selectTipoDoc">
+                                <option value="">Seleccione...</option>
+                                <option value="DNI">DNI</option>
+                                <option value="Titulo Academico">Titulo Academico</option>
+                                <option value="Antecedente Penal">Antecedente Penal</option>
+                                <option value="Antecedente Policial">Antecedente Policial</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">Archivo</label>
+                            <input type="file" class="form-control" accept="image/*,.pdf"
+                                   id="inputDocumento">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-primary w-100"
+                                    id="btnAgregarDoc" onclick="agregarDocumento()" disabled>
+                                <i class="bi bi-plus-lg me-1"></i>Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
+        </div>
+    </div>
+
+    <% if (formulario.estado_formulario !== 'Finalizado') { %>
+        <!-- Botones de accion -->
+        <div class="card">
+            <div class="card-body d-flex flex-wrap gap-2 justify-content-between">
+                <div>
+                    <span id="autoguardadoStatus" class="text-muted small">
+                        <i class="bi bi-cloud-check me-1"></i>Autoguardado activado
+                    </span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" name="finalizar" value="false" class="btn btn-outline-primary">
+                        <i class="bi bi-save me-2"></i>Guardar Borrador
+                    </button>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirmarFinalizar">
+                        <i class="bi bi-check-circle me-2"></i>Finalizar Evaluacion
+                    </button>
+                </div>
+            </div>
+        </div>
+    <% } %>
+</form>
+
+<!-- Modal de confirmacion -->
+<div class="modal fade" id="confirmarFinalizar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Finalizacion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Esta seguro de finalizar este estudio socioeconomico?</p>
+                <p class="text-warning"><i class="bi bi-exclamation-triangle me-2"></i>Una vez finalizado, no podra modificar la informacion.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success"
+                        id="btnConfirmarFinalizar"
+                        onclick="subirDocumentosPendientesYFinalizar()">
+                    <i class="bi bi-check-circle me-2"></i>Si, Finalizar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Autoguardado cada 30 segundos
+    let autoguardadoTimer;
+    
+    function autoguardar() {
+        const form = document.getElementById('formSocioeconomico');
+        const formData = new FormData(form);
+        formData.append('finalizar', 'false');
+        
+        document.getElementById('autoguardadoStatus').innerHTML = 
+            '<i class="bi bi-arrow-repeat me-1"></i>Guardando...';
+        
+        fetch('/encuestador/formularios/socioeconomico/<%= servicio.id_servicio %>', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('autoguardadoStatus').innerHTML = 
+                    '<i class="bi bi-cloud-check me-1 text-success"></i>Guardado ' + new Date().toLocaleTimeString();
+            }
+        })
+        .catch(error => {
+            document.getElementById('autoguardadoStatus').innerHTML = 
+                '<i class="bi bi-exclamation-triangle me-1 text-danger"></i>Error al guardar';
+        });
+    }
+
+    // Iniciar autoguardado si el formulario no esta finalizado
+    <% if (formulario.estado_formulario !== 'Finalizado') { %>
+        autoguardadoTimer = setInterval(autoguardar, 30000);
+        
+        // Autoguardar cuando cambie cualquier campo
+        document.querySelectorAll('#formSocioeconomico input, #formSocioeconomico select, #formSocioeconomico textarea').forEach(element => {
+            element.addEventListener('change', () => {
+                clearTimeout(autoguardadoTimer);
+                autoguardadoTimer = setTimeout(autoguardar, 5000);
+            });
+        });
+    <% } %>
+
+    function finalizarFormulario() {
+        const form = document.getElementById('formSocioeconomico');
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'finalizar';
+        input.value = 'true';
+        form.appendChild(input);
+        form.submit();
+    }
+</script>
+
+<script>
+// ── Documentos pendientes (en memoria, se suben al finalizar) ─────────────
+let docsPendientes = []; // [{ tipo, archivo: File, nombre }]
+
+const inputDoc  = document.getElementById('inputDocumento');
+const selectDoc = document.getElementById('selectTipoDoc');
+const btnAgregar = document.getElementById('btnAgregarDoc');
+
+function actualizarBtnAgregar() {
+    if (!btnAgregar) return;
+    const tieneArchivo = inputDoc && inputDoc.files && inputDoc.files.length > 0;
+    const tieneTipo    = selectDoc && selectDoc.value !== '';
+    btnAgregar.disabled = !(tieneArchivo && tieneTipo);
+}
+
+if (inputDoc)  inputDoc.addEventListener('change',  actualizarBtnAgregar);
+if (selectDoc) selectDoc.addEventListener('change', actualizarBtnAgregar);
+
+function agregarDocumento() {
+    const tipo    = selectDoc.value;
+    const archivo = inputDoc.files[0];
+    if (!tipo || !archivo) return;
+
+    docsPendientes.push({ tipo, archivo, nombre: archivo.name });
+    renderListaPendientes();
+
+    // Limpiar inputs
+    selectDoc.value = '';
+    inputDoc.value  = '';
+    if (btnAgregar) btnAgregar.disabled = true;
+}
+
+function quitarDocumento(idx) {
+    docsPendientes.splice(idx, 1);
+    renderListaPendientes();
+}
+
+function renderListaPendientes() {
+    const contenedor = document.getElementById('listaDocsPendientes');
+    const lista      = document.getElementById('ulDocsPendientes');
+    if (!contenedor || !lista) return;
+
+    if (docsPendientes.length === 0) {
+        contenedor.style.display = 'none';
+        return;
+    }
+
+    contenedor.style.display = 'block';
+    lista.innerHTML = docsPendientes.map((d, i) => `
+        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <div>
+                <span class="badge bg-primary me-2">${d.tipo}</span>
+                <span class="text-muted small">${d.nombre}</span>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    onclick="quitarDocumento(${i})" title="Quitar">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </li>`).join('');
+}
+
+// ── Al finalizar: subir documentos pendientes uno a uno, luego finalizar ──
+async function subirDocumentosPendientesYFinalizar() {
+    const idServicio = '<%= servicio.id_servicio %>';
+    const btnFin = document.getElementById('btnConfirmarFinalizar');
+
+    if (docsPendientes.length > 0) {
+        if (btnFin) {
+            btnFin.disabled = true;
+            btnFin.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Subiendo documentos...';
+        }
+        for (let i = 0; i < docsPendientes.length; i++) {
+            const d = docsPendientes[i];
+            const fd = new FormData();
+            fd.append('tipo_documento', d.tipo);
+            fd.append('documento', d.archivo, d.nombre);
+            try {
+                await fetch(`/encuestador/formularios/socioeconomico/${idServicio}/documento`, {
+                    method: 'POST',
+                    body: fd
+                });
+            } catch(e) {
+                console.error('Error subiendo doc:', d.nombre, e);
+            }
+        }
+    }
+
+    // Finalizar el formulario principal
+    finalizarFormulario();
+}
+</script>
+
+<% if (formulario.estado_formulario !== 'Finalizado') { %>
+<script>
+function toggleCamposTrabajo() {
+  const trabaja = document.getElementById('trabajaActualmente').value;
+  const campos = [
+    document.getElementById('campoEmpresaActual'),
+    document.getElementById('campoTiempoTrabajando')
+  ];
+  campos.forEach(c => {
+    if (c) {
+      c.disabled = (trabaja === 'false');
+      if (trabaja === 'false') c.value = '';
+    }
+  });
+}
+
+function toggleCamposConyugue() {
+  const estadoCivil = document.getElementById('estadoCivil').value;
+  const tieneConyugue = ['Casado', 'Union libre'].includes(estadoCivil);
+  const campos = [
+    document.getElementById('campoNombreConyugue'),
+    document.getElementById('campoTelefonoConyugue'),
+    document.getElementById('campoLugarTrabajoConyugue')
+  ];
+  campos.forEach(c => {
+    if (c) {
+      c.disabled = !tieneConyugue;
+      if (!tieneConyugue) c.value = '';
+    }
+  });
+}
+
+document.getElementById('trabajaActualmente').addEventListener('change', toggleCamposTrabajo);
+document.getElementById('estadoCivil').addEventListener('change', toggleCamposConyugue);
+
+toggleCamposTrabajo();
+toggleCamposConyugue();
+</script>
+<% } %>
+
+<% if (formulario.estado_formulario !== 'Finalizado') { %>
+<div class="position-fixed bg-dark text-white rounded px-3 py-2 d-flex align-items-center gap-2"
+     style="top: 70px; right: 20px; z-index: 1050; font-size: 0.9rem; opacity: 0.85;">
+  <i class="bi bi-stopwatch"></i>
+  <span id="displayTimer">0:00</span>
+</div>
+<script>
+  let segundosTimer = parseInt(document.getElementById('tiempoLlenado').value) || 0;
+  // Mostrar el tiempo ya acumulado al cargar
+  (function() {
+    const m = Math.floor(segundosTimer / 60);
+    const s = segundosTimer % 60;
+    document.getElementById('displayTimer').textContent = m + ':' + String(s).padStart(2, '0');
+  })();
+  const intervalTimer = setInterval(() => {
+    segundosTimer++;
+    document.getElementById('tiempoLlenado').value = segundosTimer;
+    const m = Math.floor(segundosTimer / 60);
+    const s = segundosTimer % 60;
+    document.getElementById('displayTimer').textContent = m + ':' + String(s).padStart(2, '0');
+  }, 1000);
+  document.querySelector('form').addEventListener('submit', () => clearInterval(intervalTimer));
+</script>
+<% } %>
+
+<%- include('../../partials/encuestador-footer') %>

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --sidebar-bg: #1e293b;
+      --sidebar-hover: #334155;
+      --sidebar-active: #3b82f6;
+      --sidebar-width: 260px;
+      --header-height: 60px;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f1f5f9;
+      min-height: 100vh;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: var(--sidebar-bg);
+      color: white;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+
+    /* sidebar ya es flex column — el nav ocupa el espacio disponible con scroll propio */
+    
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+    }
+    
+    .sidebar-header h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+    
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px 0;
+      padding-bottom: 0;
+    }
+    
+    .nav-item {
+      padding: 0 15px;
+      margin-bottom: 5px;
+    }
+    
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    
+    .nav-link:hover {
+      background: var(--sidebar-hover);
+      color: white;
+    }
+    
+    .nav-link.active {
+      background: var(--sidebar-active);
+      color: white;
+    }
+    
+    .nav-link i {
+      width: 24px;
+      margin-right: 12px;
+      font-size: 1.1rem;
+    }
+    
+    .sidebar-footer {
+      position: static;
+      flex-shrink: 0;
+      padding: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--sidebar-bg);
+    }
+    
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 12px 15px;
+      background: rgba(239, 68, 68, 0.2);
+      border: none;
+      border-radius: 8px;
+      color: #fca5a5;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.3);
+      color: #fecaca;
+    }
+    
+    .logout-btn i {
+      margin-right: 12px;
+    }
+    
+    /* Main content */
+    .main-wrapper {
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+    }
+    
+    .top-header {
+      background: white;
+      height: var(--header-height);
+      padding: 0 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    .user-dropdown {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      background: var(--sidebar-active);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+    
+    .user-info {
+      text-align: right;
+    }
+    
+    .user-name {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 0.95rem;
+    }
+    
+    .user-role {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+    
+    .main-content {
+      padding: 30px;
+    }
+    
+    /* Mobile */
+    .mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #1e293b;
+      cursor: pointer;
+    }
+    
+    @media (max-width: 991px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      
+      .main-wrapper {
+        margin-left: 0;
+      }
+      
+      .mobile-toggle {
+        display: block;
+      }
+      
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      }
+      
+      .sidebar-overlay.show {
+        display: block;
+      }
+    }
+    
+    /* Cards y componentes comunes */
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 15px 20px;
+      font-weight: 600;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-card .icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+    }
+    
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    
+    .stat-card .label {
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+    
+    .btn-primary {
+      background: #3b82f6;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: 500;
+    }
+    
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+    
+    .table {
+      margin-bottom: 0;
+    }
+    
+    .table th {
+      border-top: none;
+      font-weight: 600;
+      color: #475569;
+      background: #f8fafc;
+    }
+    
+    .badge {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 5px;
+    }
+    
+    .page-subtitle {
+      color: #64748b;
+      margin-bottom: 25px;
+    }
+    
+    .alert {
+      border: none;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Overlay para mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>SECU</h2>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-item">
+        <a href="/admin/dashboard" class="nav-link <%= typeof active !== 'undefined' && active === 'dashboard' ? 'active' : '' %>">
+          <i class="bi bi-bar-chart-line"></i>
+          Dashboard
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/servicios" class="nav-link <%= typeof active !== 'undefined' && active === 'servicios' ? 'active' : '' %>">
+          <i class="bi bi-briefcase"></i>
+          Servicios
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/expedientes" class="nav-link <%= typeof active !== 'undefined' && active === 'expedientes' ? 'active' : '' %>">
+          <i class="bi bi-folder2-open"></i>
+          Expedientes
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/encuestadores/carga" class="nav-link <%= typeof active !== 'undefined' && active === 'encuestadores' ? 'active' : '' %>">
+          <i class="bi bi-people"></i>
+          Carga Encuestadores
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/cotizaciones" class="nav-link <%= typeof active !== 'undefined' && active === 'cotizaciones' ? 'active' : '' %>">
+          <i class="bi bi-file-earmark-text"></i>
+          Cotizaciones
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/facturas" class="nav-link <%= typeof active !== 'undefined' && active === 'facturas' ? 'active' : '' %>">
+          <i class="bi bi-receipt"></i>
+          Facturas
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/empresas" class="nav-link <%= typeof active !== 'undefined' && active === 'empresas' ? 'active' : '' %>">
+          <i class="bi bi-building"></i>
+          Empresas
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/empleados" class="nav-link <%= typeof active !== 'undefined' && active === 'empleados' ? 'active' : '' %>">
+          <i class="bi bi-people"></i>
+          Empleados
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/tipos-servicio" class="nav-link <%= typeof active !== 'undefined' && active === 'tipos-servicio' ? 'active' : '' %>">
+          <i class="bi bi-tags"></i>
+          Tipos de Servicio
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/puestos" class="nav-link <%= typeof active !== 'undefined' && active === 'puestos' ? 'active' : '' %>">
+          <i class="bi bi-person-badge"></i>
+          Puestos
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/reportes" class="nav-link <%= typeof active !== 'undefined' && active === 'reportes' ? 'active' : '' %>">
+          <i class="bi bi-graph-up"></i>
+          Reportes
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="/admin/auditoria" class="nav-link <%= typeof active !== 'undefined' && active === 'auditoria' ? 'active' : '' %>">
+          <i class="bi bi-shield-check"></i>
+          Auditoria
+        </a>
+      </div>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <a href="/logout" class="logout-btn">
+        <i class="bi bi-box-arrow-left"></i>
+        Cerrar Sesion
+      </a>
+    </div>
+  </aside>
+  
+  <!-- Main content wrapper -->
+  <div class="main-wrapper">
+    <header class="top-header">
+      <div class="d-flex align-items-center">
+        <button class="mobile-toggle me-3" onclick="toggleSidebar()">
+          <i class="bi bi-list"></i>
+        </button>
+        <span class="header-title">Sistema SECU</span>
+      </div>
+      
+      <div class="dropdown">
+        <div class="user-dropdown" data-bs-toggle="dropdown">
+          <div class="user-info d-none d-sm-block">
+            <div class="user-name"><%= user.nombre_completo %></div>
+            <div class="user-role">Administrador</div>
+          </div>
+          <div class="user-avatar">
+            <%= user.nombre_completo.charAt(0).toUpperCase() %>
+          </div>
+        </div>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="/admin/perfil"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-left me-2"></i>Cerrar Sesion</a></li>
+        </ul>
+      </div>
+    </header>
+    
+    <main class="main-content">
+      <% if (typeof success !== 'undefined' && success) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="bi bi-check-circle me-2"></i><%= success %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+      
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-triangle me-2"></i><%= error %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>

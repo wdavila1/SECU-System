@@ -1,0 +1,23 @@
+{
+  "name": "secu-system",
+  "version": "1.0.0",
+  "description": "Sistema de gestion SECU - Servicios de Investigacion y Evaluacion",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "crear-usuarios": "node scripts/crear-usuarios-iniciales.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-pg-simple": "^10.0.0",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.12.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "sharp": "^0.33.5"
+  }
+}

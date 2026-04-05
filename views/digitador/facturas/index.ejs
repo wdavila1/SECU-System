@@ -1,0 +1,179 @@
+<%- include('../../partials/digitador-header', { active: 'facturas' }) %>
+
+<div class="page-title">Facturas</div>
+<p class="page-subtitle">Gestión de facturas subidas</p>
+
+<!-- Barra superior -->
+<div class="d-flex justify-content-end mb-3">
+  <a href="/digitador/facturas/nuevo" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-2"></i>Nueva Factura
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      
+      <div class="col">
+        <label class="form-label text-muted small fw-bold">Buscar</label>
+        <input type="text" name="buscar" value="<%= filtros.buscar || '' %>" placeholder="Buscar empresa o numero..." class="form-control">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label text-muted small fw-bold">Estado</label>
+        <select name="estado" class="form-select">
+          <option value="">Todos</option>
+          <option value="Pendiente" <%= filtros.estado === 'Pendiente' ? 'selected' : '' %>>Pendiente</option>
+          <option value="Pagada"    <%= filtros.estado === 'Pagada'    ? 'selected' : '' %>>Pagada</option>
+          <option value="Negada"    <%= filtros.estado === 'Negada'    ? 'selected' : '' %>>Negada</option>
+        </select>
+      </div>
+
+      <div class="col-auto">
+        <label class="form-label text-muted small fw-bold">Fecha Desde</label>
+        <input type="date" name="fecha_desde" value="<%= filtros.fecha_desde || '' %>" class="form-control">
+      </div>
+
+      <div class="col-auto">
+        <label class="form-label text-muted small fw-bold">Fecha Hasta</label>
+        <input type="date" name="fecha_hasta" value="<%= filtros.fecha_hasta || '' %>" class="form-control">
+      </div>
+
+      <div class="col-auto d-flex gap-2">
+        
+        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center" 
+                style="min-width: 160px; height: 38px;">
+          <i class="bi bi-search me-2"></i> Filtrar
+        </button>
+
+        <a href="/digitador/facturas" 
+           class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+           style="width: 38px; height: 38px; min-width: 38px; padding: 0;" 
+           title="Limpiar filtros">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="card">
+  <div class="card-body p-0">
+    <% if (facturas && facturas.length > 0) { %>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th style="width: 15%">No. Factura</th>
+              <th style="width: 22%">Empresa</th>
+              <th style="width: 12%">Fecha</th>
+              <th style="width: 12%">Monto</th>
+              <th style="width: 10%">Estado</th>
+              <th style="width: 12%">Documento</th>
+              <th style="width: 17%" class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% facturas.forEach(function(factura) { %>
+              <tr>
+                <td><strong><%= factura.numero_factura %></strong></td>
+                <td><%= factura.empresa %></td>
+                <td>
+                  <%= factura.fecha_factura ? new Date(factura.fecha_factura).toLocaleDateString('es-HN') : '-' %>
+                </td>
+                <td>
+                  <% if (factura.monto_total) { %>
+                    L. <%= parseFloat(factura.monto_total).toFixed(2) %>
+                  <% } else { %>
+                    <span class="text-muted">-</span>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="badge
+                    <% if (factura.status_factura === 'Pendiente') { %>bg-warning text-dark
+                    <% } else if (factura.status_factura === 'Pagada') { %>bg-success
+                    <% } else { %>bg-danger<% } %>">
+                    <%= factura.status_factura %>
+                  </span>
+                </td>
+                <td>
+                  <% if (factura.url_imagen_factura) { %>
+                    <a href="<%= factura.url_imagen_factura %>" target="_blank" class="btn btn-sm btn-info">
+                      <i class="bi bi-file-earmark me-1"></i>Ver
+                    </a>
+                  <% } else { %>
+                    <span class="text-muted small">Sin archivo</span>
+                  <% } %>
+                </td>
+                <td class="text-center">
+                  <% if (factura.status_factura === 'Pendiente') { %>
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                          <form method="POST" action="/digitador/facturas/<%= factura.id_factura %>/estado">
+                            <input type="hidden" name="status_factura" value="Pagada">
+                            <button type="submit" class="dropdown-item text-success">
+                              <i class="bi bi-check-circle me-2"></i>Marcar como Pagada
+                            </button>
+                          </form>
+                        </li>
+                        <li>
+                          <form method="POST" action="/digitador/facturas/<%= factura.id_factura %>/estado">
+                            <input type="hidden" name="status_factura" value="Negada">
+                            <button type="submit" class="dropdown-item text-danger">
+                              <i class="bi bi-x-circle me-2"></i>Marcar como Negada
+                            </button>
+                          </form>
+                        </li>
+                      </ul>
+                    </div>
+                  <% } else { %>
+                    <span class="text-muted small">-</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+<% if (totalPages > 1) { %>
+<nav class="mt-3 px-3 pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <small class="text-muted">Mostrando <%= (page-1)*10+1 %>–<%= Math.min(page*10, total) %> de <%= total %> registros</small>
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page-1}).toString() %>"><i class="bi bi-chevron-left"></i></a>
+    </li>
+    <% for(let i = 1; i <= totalPages; i++) { %>
+      <% if (i === 1 || i === totalPages || (i >= page-2 && i <= page+2)) { %>
+        <li class="page-item <%= i === page ? 'active' : '' %>">
+          <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: i}).toString() %>"><%= i %></a>
+        </li>
+      <% } else if (i === page-3 || i === page+3) { %>
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      <% } %>
+    <% } %>
+    <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+      <a class="page-link" href="?<%= new URLSearchParams({...filtros, page: page+1}).toString() %>"><i class="bi bi-chevron-right"></i></a>
+    </li>
+  </ul>
+</nav>
+<% } %>
+      </div>
+    <% } else { %>
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-receipt fs-1 d-block mb-3"></i>
+        <p class="mb-2">No hay facturas registradas</p>
+        <a href="/digitador/facturas/nuevo" class="btn btn-primary btn-sm">
+          Subir primera factura
+        </a>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../../partials/digitador-footer') %>
