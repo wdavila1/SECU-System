@@ -193,7 +193,6 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// Paleta Admin: azul oscuro
 const coloresAdmin = ['#1e3a5f', '#2563eb', '#3b82f6', '#93c5fd', '#60a5fa', '#1d4ed8', '#1e40af', '#3730a3'];
 const coloresEstado = {
   'En proceso': '#3b82f6',
@@ -201,82 +200,52 @@ const coloresEstado = {
   'Cancelado': '#ef4444'
 };
 
-// Grafica Donut: Por Estado
-<% if (porEstado.length > 0) { %>
-new Chart(document.getElementById('graficaEstado'), {
-  type: 'doughnut',
-  data: {
-    labels: [<%- porEstado.map(r => `'${r.estado}'`).join(',') %>],
-    datasets: [{
-      data: [<%= porEstado.map(r => r.total).join(',') %>],
-      backgroundColor: [<%- porEstado.map(r => `coloresEstado['${r.estado}'] || '#6b7280'`).join(',') %>],
-      borderWidth: 0
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'bottom' }
-    }
-  }
-});
-<% } %>
+const porEstadoData  = <%- JSON.stringify(porEstado) %>;
+const porEmpresaData = <%- JSON.stringify(porEmpresa) %>;
+const porMesData     = <%- JSON.stringify(porMes) %>;
 
-// Grafica Barras Horizontales: Por Empresa
-<% if (porEmpresa.length > 0) { %>
-new Chart(document.getElementById('graficaEmpresa'), {
-  type: 'bar',
-  data: {
-    labels: [<%- porEmpresa.map(r => `'${r.empresa.substring(0, 15)}...'`).join(',') %>],
-    datasets: [{
-      label: 'Expedientes',
-      data: [<%= porEmpresa.map(r => r.total).join(',') %>],
-      backgroundColor: '#2563eb',
-      borderRadius: 4
-    }]
-  },
-  options: {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false }
-    },
-    scales: {
-      x: { beginAtZero: true, ticks: { stepSize: 1 } }
-    }
-  }
-});
-<% } %>
+function sinDatos(canvasId) {
+  const el = document.getElementById(canvasId);
+  if (!el) return;
+  const wrapper = el.parentElement;
+  wrapper.innerHTML = '<div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted py-4"><i class="bi bi-bar-chart fs-1 opacity-25"></i><small class="mt-2">Sin datos para mostrar</small></div>';
+}
 
-// Grafica Linea: Por Mes
-<% if (porMes.length > 0) { %>
-new Chart(document.getElementById('graficaMes'), {
-  type: 'line',
-  data: {
-    labels: [<%- porMes.map(r => `'${r.mes_label}'`).join(',') %>],
-    datasets: [{
-      label: 'Expedientes',
-      data: [<%= porMes.map(r => r.total).join(',') %>],
-      borderColor: '#1e3a5f',
-      backgroundColor: 'rgba(30, 58, 95, 0.1)',
-      fill: true,
-      tension: 0.3
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false }
+// Donut: Por Estado
+if (porEstadoData.length > 0) {
+  new Chart(document.getElementById('graficaEstado'), {
+    type: 'doughnut',
+    data: {
+      labels: porEstadoData.map(r => r.estado),
+      datasets: [{ data: porEstadoData.map(r => r.total), backgroundColor: porEstadoData.map(r => coloresEstado[r.estado] || '#6b7280'), borderWidth: 0 }]
     },
-    scales: {
-      y: { beginAtZero: true, ticks: { stepSize: 1 } }
-    }
-  }
-});
-<% } %>
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+} else { sinDatos('graficaEstado'); }
+
+// Barras horizontales: Top 10 Empresas
+if (porEmpresaData.length > 0) {
+  new Chart(document.getElementById('graficaEmpresa'), {
+    type: 'bar',
+    data: {
+      labels: porEmpresaData.map(r => r.empresa.length > 15 ? r.empresa.substring(0, 15) + '…' : r.empresa),
+      datasets: [{ label: 'Expedientes', data: porEmpresaData.map(r => r.total), backgroundColor: '#2563eb', borderRadius: 4 }]
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+} else { sinDatos('graficaEmpresa'); }
+
+// Línea: Últimos 6 Meses
+if (porMesData.length > 0) {
+  new Chart(document.getElementById('graficaMes'), {
+    type: 'line',
+    data: {
+      labels: porMesData.map(r => r.mes_label),
+      datasets: [{ label: 'Expedientes', data: porMesData.map(r => r.total), borderColor: '#1e3a5f', backgroundColor: 'rgba(30,58,95,0.1)', fill: true, tension: 0.3 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+} else { sinDatos('graficaMes'); }
 </script>
 
 <style>

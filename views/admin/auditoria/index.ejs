@@ -81,9 +81,9 @@
                 <th>Usuario</th>
                 <th>IP</th>
                 <th>Empleado</th>
-                <th>Inicio de Sesion</th>
-                <th>Cierre de Sesion</th>
-                <th>Duracion</th>
+                <th>Inicio de Sesión</th>
+                <th>Cierre de Sesión</th>
+                <th>Duración</th>
               </tr>
             </thead>
             <tbody>
@@ -120,14 +120,14 @@
                     <td>
                       <% if (esInterrumpida) { %>
                         <span class="badge bg-warning text-dark">
-                          <i class="bi bi-exclamation-triangle me-1"></i>Sesion interrumpida
+                          <i class="bi bi-exclamation-triangle me-1"></i>Sesión interrumpida
                         </span>
                       <% } else if (fin) { %>
                         <i class="bi bi-box-arrow-left text-danger me-1"></i>
                         <%= fin.toLocaleString('es-HN') %>
                       <% } else { %>
                         <span class="badge bg-success">
-                          <i class="bi bi-circle-fill me-1" style="font-size:.5rem"></i>Sesion activa
+                          <i class="bi bi-circle-fill me-1" style="font-size:.5rem"></i>Sesión activa
                         </span>
                       <% } %>
                     </td>
