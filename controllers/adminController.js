@@ -2052,11 +2052,18 @@ const generarReporteCotizaciones = async (req, res) => {
 const generarReporteEncuestadores = async (req, res) => {
   try {
     // Obtener todos los encuestadores con sus metricas
+    // NOTA: los puestos se obtienen en subquery separado para evitar
+    // que el JOIN con empleado_puesto multiplique las filas y distorsione los COUNT
     const queryEncuestadores = `
       SELECT 
         e.id_empleado,
         p.p_nombre || ' ' || p.p_apellido as nombre,
-        STRING_AGG(DISTINCT pt.puesto, ', ') as puestos,
+        (
+          SELECT STRING_AGG(pt2.puesto, ', ')
+          FROM empleado_puesto ep2
+          INNER JOIN puesto_trabajo pt2 ON ep2.id_puesto = pt2.id_puesto
+          WHERE ep2.id_empleado = e.id_empleado
+        ) as puestos,
         COUNT(s.id_servicio) as total_asignados,
         COUNT(CASE WHEN s.estado_servicio = 'Finalizado' THEN 1 END) as total_completados,
         COUNT(CASE WHEN s.estado_servicio IN ('Pendiente', 'En proceso') 
@@ -2077,8 +2084,6 @@ const generarReporteEncuestadores = async (req, res) => {
       INNER JOIN personas p ON e.id_empleado = p.id_persona
       INNER JOIN empleado_rol er ON e.id_empleado = er.id_empleado
       INNER JOIN roles r ON er.id_rol = r.id_rol
-      LEFT JOIN empleado_puesto ep ON e.id_empleado = ep.id_empleado
-      LEFT JOIN puesto_trabajo pt ON ep.id_puesto = pt.id_puesto
       LEFT JOIN servicios s ON e.id_empleado = s.id_encuestador
       WHERE r.rol = 'Encuestador' AND e.estado_empleado = TRUE
       GROUP BY e.id_empleado, p.p_nombre, p.p_apellido

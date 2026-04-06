@@ -102,6 +102,9 @@ const tomSelectEmpresa = new TomSelect('#selectEmpresa', {
   allowEmptyOption: false
 });
 
+// Instancia TomSelect para cotización (se crea/destruye dinámicamente)
+let tomSelectCotizacion = null;
+
 // Mostrar nombre de archivo seleccionado
 document.getElementById('imagen_factura').addEventListener('change', function() {
   const fileName = document.getElementById('fileName');
@@ -117,19 +120,31 @@ document.getElementById('imagen_factura').addEventListener('change', function() 
 document.getElementById('selectEmpresa').addEventListener('change', function() {
   const idEmpresa = this.value;
   const selectCotizacion = document.getElementById('selectCotizacion');
-  
+
+  // Destruir instancia previa de TomSelect si existe
+  if (tomSelectCotizacion) {
+    tomSelectCotizacion.destroy();
+    tomSelectCotizacion = null;
+  }
+
   if (!idEmpresa) {
     selectCotizacion.innerHTML = '<option value="">Seleccione una empresa primero</option>';
     selectCotizacion.disabled = true;
     return;
   }
-  
+
   fetch('/digitador/api/cotizaciones-por-empresa?id_empresa=' + idEmpresa)
     .then(r => r.json())
     .then(data => {
       selectCotizacion.innerHTML = '<option value="">Sin cotizacion</option>' +
         data.map(c => `<option value="${c.id_cotizacion}">${c.codigo_cotizacion}</option>`).join('');
       selectCotizacion.disabled = false;
+
+      // Inicializar TomSelect en el select de cotización
+      tomSelectCotizacion = new TomSelect('#selectCotizacion', {
+        placeholder: 'Buscar cotización...',
+        allowEmptyOption: true
+      });
     })
     .catch(err => {
       console.error('Error cargando cotizaciones:', err);
