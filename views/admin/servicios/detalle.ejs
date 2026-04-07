@@ -15,7 +15,7 @@
   <div class="col-lg-8">
     <div class="card mb-4">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-info-circle me-2"></i>Informacion del Servicio</span>
+        <span><i class="bi bi-info-circle me-2"></i>Información del Servicio</span>
         <% 
           let badgeClass = 'bg-secondary';
           if (servicio.estado_servicio === 'Pendiente') badgeClass = 'bg-warning';
@@ -76,7 +76,7 @@
     <!-- Información del Candidato -->
     <div class="card">
       <div class="card-header">
-        <i class="bi bi-person me-2"></i>Informacion del Candidato
+        <i class="bi bi-person me-2"></i>Información del Candidato
       </div>
       <div class="card-body">
         <div class="row g-3">
@@ -89,11 +89,11 @@
             <p class="fw-semibold mb-0"><%= servicio.dni %></p>
           </div>
           <div class="col-md-6">
-            <label class="text-muted small">Correo Electronico</label>
+            <label class="text-muted small">Correo Electrónico</label>
             <p class="fw-semibold mb-0"><%= servicio.correo %></p>
           </div>
           <div class="col-md-6">
-            <label class="text-muted small">Telefono</label>
+            <label class="text-muted small">Teléfono</label>
             <p class="fw-semibold mb-0"><%= servicio.telefono %></p>
           </div>
         </div>

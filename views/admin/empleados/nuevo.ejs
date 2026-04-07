@@ -41,11 +41,11 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">DNI *</label>
-              <input type="text" class="form-control" name="dni" maxlength="15" 
-              placeholder="Ej: 08011200012345 (sin guiones)" required>
+              <input type="text" class="form-control" name="dni" maxlength="13" minlength="13"
+              placeholder="Ej: 0801120001234 (sin guiones)" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Genero</label>
+              <label class="form-label">Género</label>
               <select class="form-select" name="genero">
                 <option value="">Seleccionar...</option>
                 <option value="Masculino">Masculino</option>
@@ -58,12 +58,12 @@
               <input type="date" class="form-control" name="fecha_nacimiento" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Telefono *</label>
+              <label class="form-label">Teléfono *</label>
               <input type="text" class="form-control" name="telefono" 
-              placeholder="Ej: 99887766 (sin guiones)" required>
+              placeholder="Ej: 99887766 (sin guiones)" maxlength="8" required>
             </div>
             <div class="col-12">
-              <label class="form-label">Correo Electronico *</label>
+              <label class="form-label">Correo Electrónico *</label>
               <input type="email" class="form-control" name="correo" required>
             </div>
             <div class="col-md-6">
@@ -82,7 +82,7 @@
               </select>
             </div>
             <div class="col-12">
-              <label class="form-label">Direccion *</label>
+              <label class="form-label">Dirección *</label>
               <textarea class="form-control" name="direccion" rows="2" required></textarea>
             </div>
           </div>
@@ -108,7 +108,7 @@
               <small class="text-muted">Seleccione uno o mas puestos de trabajo</small>
             </div>
             <div class="col-12">
-              <label class="form-label">Fecha de Contratacion *</label>
+              <label class="form-label">Fecha de Contratación *</label>
               <input type="date" class="form-control" name="fecha_contratacion" value="<%= new Date().toISOString().split('T')[0] %>" required>
             </div>
           </div>

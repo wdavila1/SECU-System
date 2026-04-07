@@ -85,20 +85,20 @@ const _diasDet = _limiteDet ? Math.ceil((_limiteDet - _hoyDet) / 86400000) : nul
 <!-- Informacion de Contacto -->
 <div class="card mb-4">
     <div class="card-header bg-light">
-        <i class="bi bi-person-lines-fill me-2"></i>Informacion del Candidato
+        <i class="bi bi-person-lines-fill me-2"></i>Información del Candidato
     </div>
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-4">
-                <small class="text-muted">Correo Electronico</small>
+                <small class="text-muted">Correo Electrónico</small>
                 <p class="mb-0"><i class="bi bi-envelope me-1"></i><%= servicio.correo %></p>
             </div>
             <div class="col-md-4">
-                <small class="text-muted">Telefono</small>
+                <small class="text-muted">Teléfono</small>
                 <p class="mb-0"><i class="bi bi-telephone me-1"></i><%= servicio.telefono %></p>
             </div>
             <div class="col-md-4">
-                <small class="text-muted">Direccion</small>
+                <small class="text-muted">Dirección</small>
                 <p class="mb-0"><i class="bi bi-house me-1"></i><%= servicio.direccion %></p>
             </div>
             <div class="col-md-4">
@@ -106,7 +106,7 @@ const _diasDet = _limiteDet ? Math.ceil((_limiteDet - _hoyDet) / 86400000) : nul
                 <p class="mb-0"><i class="bi bi-calendar me-1"></i><%= new Date(servicio.fecha_nacimiento).toLocaleDateString('es-HN') %></p>
             </div>
             <div class="col-md-4">
-                <small class="text-muted">Genero</small>
+                <small class="text-muted">Género</small>
                 <p class="mb-0"><i class="bi bi-gender-ambiguous me-1"></i><%= servicio.genero || 'No especificado' %></p>
             </div>
             <div class="col-md-4">

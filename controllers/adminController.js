@@ -7,6 +7,16 @@ const PREGUNTAS_POLIGRAFIA = require('../utils/preguntasPoligrafia');
 // Helper: generar contraseña temporal
 const generarPassword = () => 'Secu' + Math.floor(1000 + Math.random() * 9000) + '!';
 
+// Helper: validar contraseña segura
+const validarContrasenia = (pass) => {
+  if (pass.length < 8) return 'La contraseña debe tener al menos 8 caracteres';
+  if (!/[A-Z]/.test(pass)) return 'La contraseña debe incluir al menos una letra mayúscula';
+  if (!/[a-z]/.test(pass)) return 'La contraseña debe incluir al menos una letra minúscula';
+  if (!/[0-9]/.test(pass)) return 'La contraseña debe incluir al menos un número';
+  if (!/[!@#$%^&*()\-_=+\[\]{}|;:,.<>?]/.test(pass)) return 'La contraseña debe incluir al menos un carácter especial';
+  return null;
+};
+
 // ==================== API ENDPOINTS (sin autenticación de rol) ====================
 const getCiudadesPorDepartamento = async (req, res) => {
   const { id_departamento } = req.query;
@@ -304,6 +314,15 @@ const createEmpleado = async (req, res) => {
       contrasenia = generarPassword();
     }
 
+    // Validar contraseña manual (la autogenerada Secu####! ya cumple requisitos)
+    if (!passwordGenerada) {
+      const errorPass = validarContrasenia(contrasenia);
+      if (errorPass) {
+        req.session.error = errorPass;
+        return res.redirect('/admin/empleados/nuevo');
+      }
+    }
+
     // Verificar si el DNI ya existe
     const dniExiste = await query('SELECT id_persona FROM personas WHERE dni = $1', [dni]);
     if (dniExiste.rows.length > 0) {
@@ -496,6 +515,15 @@ const resetPassword = async (req, res) => {
     const passwordGenerada = !nueva_contrasenia || nueva_contrasenia.trim() === '';
     if (passwordGenerada) {
       nueva_contrasenia = generarPassword();
+    }
+
+    // Validar contraseña manual (la autogenerada Secu####! ya cumple requisitos)
+    if (!passwordGenerada) {
+      const errorPass = validarContrasenia(nueva_contrasenia);
+      if (errorPass) {
+        req.session.error = errorPass;
+        return res.redirect(`/admin/empleados`);
+      }
     }
 
     const hashedPassword = await bcrypt.hash(nueva_contrasenia, 10);

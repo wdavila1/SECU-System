@@ -30,7 +30,7 @@
         <p class="mb-2"><strong>Nombre:</strong> <%= expediente.p_nombre %> <%= expediente.s_nombre || '' %> <%= expediente.p_apellido %> <%= expediente.s_apellido || '' %></p>
         <p class="mb-2"><strong>DNI:</strong> <%= expediente.dni %></p>
         <p class="mb-2"><strong>Correo:</strong> <%= expediente.correo %></p>
-        <p class="mb-2"><strong>Telefono:</strong> <%= expediente.telefono %></p>
+        <p class="mb-2"><strong>Teléfono:</strong> <%= expediente.telefono %></p>
         <hr>
         <p class="mb-2"><strong>Empresa:</strong> <%= expediente.empresa %></p>
         <p class="mb-2"><strong>Fecha Expediente:</strong> <%= new Date(expediente.fecha_expediente).toLocaleDateString('es-HN') %></p>
@@ -278,9 +278,9 @@
             
             <!-- Campo Direccion del Servicio -->
             <div class="col-12">
-              <label class="form-label">Direccion del Servicio</label>
+              <label class="form-label">Dirección del Servicio</label>
               <input type="text" name="direccion_servicio" id="modalDireccion" class="form-control"
-                     placeholder="Direccion donde se realizara el servicio">
+                     placeholder="Dirección donde se realizara el servicio">
               <small class="text-muted" id="modalDireccionHint"></small>
             </div>
             
@@ -360,9 +360,9 @@
             
             <!-- Campo Direccion del Servicio -->
             <div class="col-12">
-              <label class="form-label">Direccion del Servicio</label>
+              <label class="form-label">Dirección del Servicio</label>
               <input type="text" name="direccion_servicio" id="editDireccion" class="form-control"
-                     placeholder="Direccion donde se realizara el servicio">
+                     placeholder="Dirección donde se realizara el servicio">
               <small class="text-muted" id="editDireccionHint"></small>
             </div>
             

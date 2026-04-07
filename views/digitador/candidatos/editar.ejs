@@ -39,7 +39,7 @@
           <small class="text-muted">El DNI no puede ser modificado</small>
         </div>
         <div class="col-md-6 col-lg-4">
-          <label class="form-label">Genero</label>
+          <label class="form-label">Género</label>
           <select class="form-select" name="genero">
             <option value="">Seleccionar...</option>
             <option value="Masculino" <%= candidato.genero === 'Masculino' ? 'selected' : '' %>>Masculino</option>
@@ -52,13 +52,13 @@
           <input type="date" class="form-control" name="fecha_nacimiento" value="<%= candidato.fecha_nacimiento ? new Date(candidato.fecha_nacimiento).toISOString().split('T')[0] : '' %>" required>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Correo Electronico *</label>
+          <label class="form-label">Correo Electrónico *</label>
           <input type="email" class="form-control" name="correo" value="<%= candidato.correo %>" required>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Telefono *</label>
+          <label class="form-label">Teléfono *</label>
           <input type="text" class="form-control" name="telefono" value="<%= candidato.telefono %>" 
-          placeholder="Ej: 99887766 (sin guiones)" required>
+          placeholder="Ej: 99887766 (sin guiones)" maxlength="8" required>
         </div>
         <div class="col-md-6">
           <label class="form-label">Departamento *</label>
@@ -90,7 +90,7 @@
           </select>
         </div>
         <div class="col-12">
-          <label class="form-label">Direccion *</label>
+          <label class="form-label">Dirección *</label>
           <textarea class="form-control" name="direccion" rows="2" required><%= candidato.direccion %></textarea>
         </div>
       </div>

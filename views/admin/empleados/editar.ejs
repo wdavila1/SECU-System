@@ -45,7 +45,7 @@
               <small class="text-muted">El DNI no puede ser modificado</small>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Genero</label>
+              <label class="form-label">Género</label>
               <select class="form-select" name="genero">
                 <option value="">Seleccionar...</option>
                 <option value="Masculino" <%= empleado.genero === 'Masculino' ? 'selected' : '' %>>Masculino</option>
@@ -58,12 +58,12 @@
               <input type="date" class="form-control" name="fecha_nacimiento" value="<%= empleado.fecha_nacimiento ? new Date(empleado.fecha_nacimiento).toISOString().split('T')[0] : '' %>" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Telefono *</label>
+              <label class="form-label">Teléfono *</label>
               <input type="text" class="form-control" name="telefono" value="<%= empleado.telefono %>" 
-              placeholder="Ej: 99887766 (sin guiones)" required>
+              placeholder="Ej: 99887766 (sin guiones)" maxlength="8" required>
             </div>
             <div class="col-12">
-              <label class="form-label">Correo Electronico *</label>
+              <label class="form-label">Correo Electrónico *</label>
               <input type="email" class="form-control" name="correo" value="<%= empleado.correo %>" required>
             </div>
             <div class="col-12">
@@ -81,7 +81,7 @@
               </select>
             </div>
             <div class="col-12">
-              <label class="form-label">Direccion *</label>
+              <label class="form-label">Dirección *</label>
               <textarea class="form-control" name="direccion" rows="2" required><%= empleado.direccion %></textarea>
             </div>
           </div>
@@ -111,7 +111,7 @@
               <small class="text-muted">Seleccione uno o mas puestos de trabajo</small>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Fecha de Contratacion *</label>
+              <label class="form-label">Fecha de Contratación *</label>
               <input type="date" class="form-control" name="fecha_contratacion" value="<%= empleado.fecha_contratacion ? new Date(empleado.fecha_contratacion).toISOString().split('T')[0] : '' %>" required>
             </div>
             <div class="col-md-6">

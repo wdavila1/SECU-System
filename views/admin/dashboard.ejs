@@ -72,12 +72,12 @@
               const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
               const color = colors[index % colors.length];
             %>
-              <div class="col-md-3 col-6">
-                <div class="text-center p-3 rounded" style="background: <%= color %>15;">
+              <div class="col-md-3 col-6 d-flex">
+                <div class="text-center p-3 rounded w-100 d-flex flex-column align-items-center justify-content-center" style="background: <%= color %>15; min-height: 140px;">
                   <div class="mb-2">
-                    <div style="height: <%= Math.max(tipo.cantidad * 10, 30) %>px; width: 40px; background: <%= color %>; border-radius: 8px; margin: 0 auto;"></div>
+                    <div style="height: 40px; width: 40px; background: <%= color %>; border-radius: 8px; margin: 0 auto;"></div>
                   </div>
-                  <div class="fw-bold" style="color: <%= color %>"><%= tipo.tipo_servicio %></div>
+                  <div class="fw-bold" style="color: <%= color %>; word-break: break-word;"><%= tipo.tipo_servicio %></div>
                   <div class="text-muted small"><%= tipo.cantidad %> servicios</div>
                 </div>
               </div>
@@ -156,7 +156,7 @@
           <div class="col-md-3 col-6">
             <a href="/admin/auditoria" class="btn btn-outline-secondary w-100 py-3">
               <i class="bi bi-shield-check d-block mb-1" style="font-size: 1.5rem;"></i>
-              Ver Auditoria
+              Ver Auditoría
             </a>
           </div>
         </div>

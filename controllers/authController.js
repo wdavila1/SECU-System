@@ -2,6 +2,15 @@ const bcrypt = require('bcryptjs');
 const { query } = require('../config/database');
 const { registrarLogin, registrarLogout } = require('../middleware/authMiddleware');
 
+const validarContrasenia = (pass) => {
+  if (pass.length < 8) return 'La contraseña debe tener al menos 8 caracteres';
+  if (!/[A-Z]/.test(pass)) return 'La contraseña debe incluir al menos una letra mayúscula';
+  if (!/[a-z]/.test(pass)) return 'La contraseña debe incluir al menos una letra minúscula';
+  if (!/[0-9]/.test(pass)) return 'La contraseña debe incluir al menos un número';
+  if (!/[!@#$%^&*()\-_=+\[\]{}|;:,.<>?]/.test(pass)) return 'La contraseña debe incluir al menos un carácter especial';
+  return null;
+};
+
 // Mostrar página de login
 const showLogin = (req, res) => {
   if (req.session.user) {
@@ -179,9 +188,10 @@ const processCambiarContrasenia = async (req, res) => {
       return res.redirect('/cambiar-contrasenia');
     }
 
-    // Validar nueva contraseña (mínimo 6 caracteres)
-    if (nueva_contrasenia.length < 6) {
-      req.session.error = 'La nueva contraseña debe tener al menos 6 caracteres';
+    // Validar nueva contraseña
+    const errorPass = validarContrasenia(nueva_contrasenia);
+    if (errorPass) {
+      req.session.error = errorPass;
       return res.redirect('/cambiar-contrasenia');
     }
 

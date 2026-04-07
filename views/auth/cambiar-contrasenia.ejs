@@ -144,10 +144,13 @@
       <% } %>
       
       <div class="password-requirements">
-        <h6><i class="bi bi-info-circle me-2"></i>Requisitos de contraseña:</h6>
-        <ul>
-          <li>Minimo 6 caracteres</li>
-          <li>Se recomienda incluir mayusculas, minusculas y numeros</li>
+        <h6><i class="bi bi-shield-lock me-2"></i>Requisitos de la contraseña:</h6>
+        <ul id="listaRequisitos">
+          <li id="req-length">Mínimo 8 caracteres</li>
+          <li id="req-upper">Al menos 1 letra mayúscula</li>
+          <li id="req-lower">Al menos 1 letra minúscula</li>
+          <li id="req-number">Al menos 1 número</li>
+          <li id="req-special">Al menos 1 carácter especial (!@#$%...)</li>
         </ul>
       </div>
       
@@ -163,14 +166,14 @@
           <label for="nueva_contrasenia" class="form-label">
             <i class="bi bi-lock-fill me-1"></i>Nueva Contraseña
           </label>
-          <input type="password" class="form-control" name="nueva_contrasenia" id="nueva_contrasenia" minlength="6" required>
+          <input type="password" class="form-control" name="nueva_contrasenia" id="nueva_contrasenia" minlength="8" required>
         </div>
         
         <div class="mb-4">
           <label for="confirmar_contrasenia" class="form-label">
             <i class="bi bi-check-circle me-1"></i>Confirmar Nueva Contraseña
           </label>
-          <input type="password" class="form-control" name="confirmar_contrasenia" id="confirmar_contrasenia" minlength="6" required>
+          <input type="password" class="form-control" name="confirmar_contrasenia" id="confirmar_contrasenia" minlength="8" required>
         </div>
         
         <div class="d-grid gap-2">
@@ -189,14 +192,40 @@
   
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Validar que las contraseñas coincidan
+    const input = document.getElementById('nueva_contrasenia');
+
+    function checkReq(id, test) {
+      const el = document.getElementById(id);
+      if (test) {
+        el.style.color = '#16a34a';
+        el.innerHTML = '✓ ' + el.innerHTML.replace(/^[✓✗] /, '');
+      } else {
+        el.style.color = '#dc2626';
+        el.innerHTML = '✗ ' + el.innerHTML.replace(/^[✓✗] /, '');
+      }
+    }
+
+    input.addEventListener('input', function() {
+      const v = this.value;
+      checkReq('req-length',  v.length >= 8);
+      checkReq('req-upper',   /[A-Z]/.test(v));
+      checkReq('req-lower',   /[a-z]/.test(v));
+      checkReq('req-number',  /[0-9]/.test(v));
+      checkReq('req-special', /[!@#$%^&*()\-_=+\[\]{}|;:,.<>?]/.test(v));
+    });
+
     document.querySelector('form').addEventListener('submit', function(e) {
       const nueva = document.getElementById('nueva_contrasenia').value;
       const confirmar = document.getElementById('confirmar_contrasenia').value;
-      
       if (nueva !== confirmar) {
         e.preventDefault();
         alert('Las contraseñas nuevas no coinciden');
+        return;
+      }
+      if (nueva.length < 8 || !/[A-Z]/.test(nueva) || !/[a-z]/.test(nueva) ||
+          !/[0-9]/.test(nueva) || !/[!@#$%^&*()\-_=+\[\]{}|;:,.<>?]/.test(nueva)) {
+        e.preventDefault();
+        alert('La contraseña no cumple con todos los requisitos de seguridad');
       }
     });
   </script>

@@ -8,11 +8,41 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
     @media print {
+      /* Ocultar elementos de navegación */
       .no-print { display: none !important; }
-      [data-print-show] { display: block !important; }
-      body { font-size: 12pt; }
-      .page-break { page-break-before: always; }
-      .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
+
+      /* Forzar fondo blanco y sin sombras */
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { background: white !important; font-size: 11pt; margin: 0; }
+
+      /* Quitar restricciones de ancho del container */
+      .container, .container-fluid { max-width: 100% !important; padding: 0 10px !important; }
+
+      /* Las columnas Bootstrap pasan a full width en impresión */
+      .col-md-6, .col-md-4, .col-md-3, .col-md-8, [class*="col-"] {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+      }
+
+      /* Las info-grid a 2 columnas (manejable en impresión) */
+      .info-grid {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      /* Cards sin sombra, sin corte entre páginas */
+      .card, .service-card {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      /* Encabezado reducido */
+      .header-brand { padding: 15px !important; margin-bottom: 15px !important; }
+
+      /* Mostrar URL del PDF psicométrico al imprimir */
+      .pdf-print-url { display: block !important; }
     }
     
     body {
@@ -146,11 +176,11 @@
         <div class="info-value"><%= expediente.correo %></div>
       </div>
       <div class="info-item">
-        <div class="info-label">Telefono</div>
+        <div class="info-label">Teléfono</div>
         <div class="info-value"><%= expediente.telefono %></div>
       </div>
       <div class="info-item">
-        <div class="info-label">Genero</div>
+        <div class="info-label">Género</div>
         <div class="info-value"><%= expediente.genero || 'No especificado' %></div>
       </div>
       <div class="info-item">
@@ -268,17 +298,21 @@
                   <small class="text-muted">Reporte PDF</small>
                   <p class="mb-0">
                     <% if (servicio.psicometrico.url_reporte_pdf) { %>
-                      <a href="<%= servicio.psicometrico.url_reporte_pdf %>" target="_blank" class="btn btn-sm btn-outline-primary no-print">
+                      <!-- En pantalla: botón clicable -->
+                      <a href="<%= servicio.psicometrico.url_reporte_pdf %>"
+                         target="_blank"
+                         class="btn btn-sm btn-primary no-print">
                         <i class="bi bi-file-pdf me-1"></i>Ver PDF
                       </a>
-                      <span class="d-none d-print-block" data-print-show>
-                        <small class="text-muted">
-                          Reporte PDF disponible en:<br>
-                          <span style="font-size:0.7rem; word-break:break-all;">
+                      <!-- En impresión: URL como texto clicable -->
+                      <div style="display:none;" class="pdf-print-url">
+                        <small style="font-size:0.75rem; color:#334155;">
+                          Reporte PDF: <a href="<%= servicio.psicometrico.url_reporte_pdf %>"
+                                          style="color:#0e7490; word-break:break-all; font-size:0.7rem;">
                             <%= servicio.psicometrico.url_reporte_pdf %>
-                          </span>
+                          </a>
                         </small>
-                      </span>
+                      </div>
                     <% } else { %>
                       <span class="text-muted">No adjuntado</span>
                     <% } %>
